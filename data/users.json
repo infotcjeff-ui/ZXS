@@ -1,0 +1,10 @@
+[
+  {
+    "id": "d567f765-5df7-455f-be71-600c790da755",
+    "name": "Admin",
+    "email": "admin@zxsgit.local",
+    "passwordHash": "khRDxecqrJ8QMh1S8JXt1e0Eq43uyozQ60Ja1GwTXBQ=",
+    "role": "admin",
+    "createdAt": 1765265001726
+  }
+]
