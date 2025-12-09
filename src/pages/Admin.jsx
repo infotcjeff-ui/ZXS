@@ -16,11 +16,15 @@ function AdminPage() {
       setLoading(true)
       try {
         const data = await fetchUsers()
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setUsers(data)
-          setError(null)
+          if (data.length === 0) {
+            setError('No users found. Please register a user first.')
+          } else {
+            setError(null)
+          }
         } else {
-          setError('No users found. Please register a user first.')
+          setError('Invalid data format received.')
           setUsers([])
         }
       } catch (err) {
@@ -31,6 +35,17 @@ function AdminPage() {
       setLoading(false)
     }
     load()
+    // Reload when storage changes (for localStorage updates)
+    const handleStorageChange = () => {
+      load()
+    }
+    window.addEventListener('storage', handleStorageChange)
+    // Also listen for custom event for same-tab updates
+    window.addEventListener('users:update', handleStorageChange)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('users:update', handleStorageChange)
+    }
   }, [fetchUsers])
 
   return (

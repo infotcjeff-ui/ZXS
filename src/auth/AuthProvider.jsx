@@ -91,9 +91,24 @@ export function AuthProvider({ children }) {
     if (!validateEmail(email)) return { ok: false, message: 'Invalid email' }
     if (password !== confirm) return { ok: false, message: 'Passwords must match' }
 
-    const users = loadUsers()
+    // Check existing users (try backend first, then localStorage)
+    let users = []
+    try {
+      const res = await fetch(`${API_BASE}/api/users`)
+      if (res.ok) {
+        const data = await res.json()
+        users = data.users ?? []
+      } else {
+        throw new Error('Backend unavailable')
+      }
+    } catch (err) {
+      console.error('Backend unavailable, using localStorage', err)
+      users = loadUsers()
+    }
+
     const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
     if (existing) return { ok: false, message: 'Email already registered' }
+
     const newUser = {
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -102,8 +117,37 @@ export function AuthProvider({ children }) {
       role: 'member',
       createdAt: Date.now(),
     }
+
+    // Try to save to backend first
+    try {
+      const res = await fetch(`${API_BASE}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newUser.name, email: newUser.email, password }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.session) {
+          const newSession = {
+            name: data.session.name,
+            email: data.session.email,
+            role: data.session.role,
+            token: data.session.token,
+            signedInAt: data.session.signedInAt,
+          }
+          setSession(newSession)
+          return { ok: true, message: data.message || 'Account created' }
+        }
+      }
+    } catch (err) {
+      console.error('Backend registration failed, using localStorage', err)
+    }
+
+    // Fallback to localStorage
     users.push(newUser)
     saveUsers(users)
+    // Dispatch event to notify admin page
+    window.dispatchEvent(new Event('users:update'))
     const newSession = {
       name: newUser.name,
       email: newUser.email,
