@@ -108,12 +108,24 @@ function CompaniesPage() {
             onEdit={() => setEditingId(company.id)}
             onCancel={() => setEditingId(null)}
             onSave={async (updatedCompany) => {
-              const res = await updateCompany(company.id, updatedCompany)
-              if (res.ok) {
-                setEditingId(null)
-                loadCompanies()
+              console.log('onSave called with payload:', updatedCompany)
+              try {
+                const res = await updateCompany(company.id, updatedCompany)
+                console.log('updateCompany response:', res)
+                if (res.ok) {
+                  setEditingId(null)
+                  // Reload companies to get fresh data
+                  await loadCompanies()
+                  // Also dispatch event to notify other components
+                  window.dispatchEvent(new Event('companies:update'))
+                } else {
+                  console.error('Update failed:', res.message)
+                }
+                return res
+              } catch (error) {
+                console.error('onSave error:', error)
+                return { ok: false, message: error.message || '更新失敗' }
               }
-              return res
             }}
             onDelete={async () => {
               if (!confirm(`確定要刪除公司 "${company.name}"？此操作無法復原。`)) return
@@ -269,7 +281,8 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
     setSaving(true)
     setAlert(null)
     try {
-      const res = await onSave({
+      // Prepare payload with all fields
+      const payload = {
         name: formData.name.trim(),
         address: formData.address || '',
         phone: formData.phone || '',
@@ -278,15 +291,27 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
         notes: formData.notes || '',
         media: Array.isArray(formData.media) ? formData.media : [],
         gallery: Array.isArray(formData.gallery) ? formData.gallery : [],
-        ownerEmail: formData.ownerEmail || company.ownerEmail,
-        ownerName: formData.ownerName || company.ownerName,
+        ownerEmail: formData.ownerEmail || company.ownerEmail || 'unknown@zxsgit.local',
+        ownerName: formData.ownerName || company.ownerName || 'Unknown',
         relatedUserIds: Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : [],
         relatedUserId: Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.length > 0 ? formData.relatedUserIds[0] : null,
-      })
+      }
+      
+      console.log('Saving company with payload:', payload)
+      console.log('Gallery count:', payload.gallery.length)
+      console.log('Related users count:', payload.relatedUserIds.length)
+      
+      const res = await onSave(payload)
+      
+      console.log('Save response:', res)
+      
       if (!res.ok) {
         setAlert({ kind: 'error', message: res.message || '更新失敗' })
+        setSaving(false)
       } else {
         setAlert({ kind: 'success', message: '更新成功' })
+        // Reload companies to get updated data
+        window.dispatchEvent(new Event('companies:update'))
         setTimeout(() => {
           setAlert(null)
           onCancel() // Close edit mode after successful save
@@ -294,8 +319,7 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
       }
     } catch (error) {
       console.error('Save error:', error)
-      setAlert({ kind: 'error', message: '更新時發生錯誤' })
-    } finally {
+      setAlert({ kind: 'error', message: '更新時發生錯誤: ' + (error.message || '未知錯誤') })
       setSaving(false)
     }
   }

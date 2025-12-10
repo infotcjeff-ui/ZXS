@@ -252,8 +252,13 @@ app.put('/api/companies/:id', (req, res) => {
   target.website = payload.website ?? target.website
   target.description = payload.description ?? target.description
   target.notes = payload.notes ?? target.notes
-  target.media = Array.isArray(payload.media) ? payload.media : target.media
-  target.gallery = Array.isArray(payload.gallery) ? payload.gallery : (target.gallery || [])
+  // Always update media and gallery from payload if provided
+  if (payload.media !== undefined) {
+    target.media = Array.isArray(payload.media) ? payload.media : []
+  }
+  if (payload.gallery !== undefined) {
+    target.gallery = Array.isArray(payload.gallery) ? payload.gallery : []
+  }
   target.ownerEmail = payload.ownerEmail ?? target.ownerEmail
   target.ownerName = payload.ownerName ?? target.ownerName
   // Always update relatedUserIds from payload if provided
