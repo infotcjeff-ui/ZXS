@@ -61,11 +61,14 @@ function NavBar() {
 function AppShell() {
   return (
     <div className="relative min-h-screen overflow-hidden text-slate-100">
-      <div className="pointer-events-none fixed inset-0">
+      <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-slate-950" />
-        <div className="absolute -left-24 top-10 h-80 w-80 rounded-full bg-sky-500/20 blur-[130px]" />
-        <div className="absolute right-0 top-20 h-72 w-72 rounded-full bg-fuchsia-500/15 blur-[140px]" />
-        <div className="absolute bottom-0 left-24 h-72 w-72 rounded-full bg-emerald-500/15 blur-[150px]" />
+        <div className="absolute -left-24 top-10 h-80 w-80 rounded-full bg-sky-500/20 blur-[130px] animate-pulse" 
+             style={{ animation: 'float 15s ease-in-out infinite' }} />
+        <div className="absolute right-0 top-20 h-72 w-72 rounded-full bg-fuchsia-500/15 blur-[140px]"
+             style={{ animation: 'float 18s ease-in-out infinite reverse' }} />
+        <div className="absolute bottom-0 left-24 h-72 w-72 rounded-full bg-emerald-500/15 blur-[150px]"
+             style={{ animation: 'float 20s ease-in-out infinite' }} />
       </div>
       <div className="relative z-10 flex min-h-screen flex-col">
         <NavBar />

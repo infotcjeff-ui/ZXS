@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider.jsx'
+import AlertBanner from '../components/AlertBanner.jsx'
 
 function CompaniesPage() {
-  const { session, fetchCompanies, deleteCompany, fetchUsers } = useAuth()
+  const { session, fetchCompanies, deleteCompany, updateCompany, fetchUsers } = useAuth()
   const [companies, setCompanies] = useState([])
   const [users, setUsers] = useState([])
   const [view, setView] = useState('grid')
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState(null)
+  const [editingId, setEditingId] = useState(null)
 
   const loadCompanies = useCallback(async () => {
     setLoading(true)
@@ -93,7 +95,17 @@ function CompaniesPage() {
             users={users}
             canEdit={canEdit(company.ownerEmail)}
             canDelete={session?.role === 'admin'}
-            onEditLink={`/companies/edit/${company.id}`}
+            isEditing={editingId === company.id}
+            onEdit={() => setEditingId(company.id)}
+            onCancel={() => setEditingId(null)}
+            onSave={async (updatedCompany) => {
+              const res = await updateCompany(company.id, updatedCompany)
+              if (res.ok) {
+                setEditingId(null)
+                loadCompanies()
+              }
+              return res
+            }}
             onDelete={async () => {
               if (!confirm(`確定要刪除公司 "${company.name}"？此操作無法復原。`)) return
               setDeletingId(company.id)
@@ -111,13 +123,23 @@ function CompaniesPage() {
   )
 }
 
-function CompanyCard({ company, canEdit, canDelete, onEditLink, onDelete, deleting, users = [] }) {
+function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel, onSave, onDelete, deleting, users = [] }) {
+  const [formData, setFormData] = useState(company)
+  const [saving, setSaving] = useState(false)
+  const [alert, setAlert] = useState(null)
+
+  useEffect(() => {
+    if (isEditing) {
+      setFormData(company)
+    }
+  }, [isEditing, company])
+
   const mainMedia =
     company.media?.find((m) => m.isMain) || (company.media && company.media[0]) || null
   
   const getRelatedUsers = () => {
     if (Array.isArray(company.relatedUserIds)) {
-      return users.filter(u => company.relatedUserIds.includes(u.email))
+      return users.filter(u => company.relatedUserIds.includes(u.id))
     }
     if (company.relatedUserId) {
       const user = users.find(u => u.id === company.relatedUserId)
@@ -127,6 +149,110 @@ function CompanyCard({ company, canEdit, canDelete, onEditLink, onDelete, deleti
   }
   
   const relatedUsers = getRelatedUsers()
+
+  const handleSave = async () => {
+    setSaving(true)
+    setAlert(null)
+    const res = await onSave({
+      name: formData.name.trim(),
+      address: formData.address || '',
+      phone: formData.phone || '',
+      website: formData.website || '',
+      description: formData.description || '',
+      notes: formData.notes || '',
+      media: Array.isArray(formData.media) ? formData.media : [],
+      ownerEmail: formData.ownerEmail || company.ownerEmail,
+      ownerName: formData.ownerName || company.ownerName,
+      relatedUserIds: Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : [],
+      relatedUserId: Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.length > 0 ? formData.relatedUserIds[0] : null,
+    })
+    setSaving(false)
+    if (!res.ok) {
+      setAlert({ kind: 'error', message: res.message || '更新失敗' })
+    } else {
+      setAlert({ kind: 'success', message: '更新成功' })
+      setTimeout(() => setAlert(null), 2000)
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
+        {alert && <AlertBanner kind={alert.kind} message={alert.message} />}
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-slate-400">公司名稱 *</label>
+            <input
+              value={formData.name || ''}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-slate-400">地址</label>
+              <input
+                value={formData.address || ''}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none focus:border-sky-400/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">電話</label>
+              <input
+                value={formData.phone || ''}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none focus:border-sky-400/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">網站</label>
+              <input
+                value={formData.website || ''}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none focus:border-sky-400/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">備註</label>
+              <input
+                value={formData.notes || ''}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none focus:border-sky-400/50"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400">描述</label>
+            <textarea
+              value={formData.description || ''}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none focus:border-sky-400/50"
+              rows={3}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || !formData.name?.trim()}
+              className="rounded-lg bg-gradient-to-r from-emerald-500 to-sky-500 px-4 py-2 text-xs font-semibold text-white shadow disabled:opacity-60"
+            >
+              {saving ? '儲存中...' : '儲存'}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={saving}
+              className="rounded-lg bg-white/10 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/15 disabled:opacity-60"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
@@ -161,12 +287,13 @@ function CompanyCard({ company, canEdit, canDelete, onEditLink, onDelete, deleti
         </Link>
         <div className="flex items-center gap-2">
           {canEdit && (
-            <Link
-              to={onEditLink}
+            <button
+              type="button"
+              onClick={onEdit}
               className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-sky-100 hover:bg-sky-500/20"
             >
               編輯
-            </Link>
+            </button>
           )}
           {canDelete && (
             <button
