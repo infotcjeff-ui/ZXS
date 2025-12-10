@@ -45,20 +45,76 @@
 
 ### 使用 Git 部署
 
-1. 在 ServerAvatar 控制台：
+1. **在 ServerAvatar 控制台設置 Git：**
    - 進入應用設置
    - 選擇 "Git Deployment"
-   - 連接 GitHub 倉庫：`infotcjeff-ui/ZXS`
-   - 選擇分支：`main`
+   - **Provider（提供者）：** 選擇 `Github`
+   - **Repository（倉庫）：** 輸入 `infotcjeff-ui/ZXS`
+   - **Current Branch（當前分支）：** 輸入 `main`
 
 2. **構建配置：**
-   - 構建命令：`npm run build:serveravatar`
-   - 輸出目錄：`dist`
-   - Node 版本：20
+   - **構建命令（Build Command）：** `npm run build:serveravatar`
+   - **輸出目錄（Output Directory）：** `dist`
+   - **Node 版本（Node Version）：** `20` 或 `20.x`
 
 3. **部署後：**
    - 訪問您的 ServerAvatar URL（例如：`jeff-zxs-sss.tempavatar.xyz`）
    - 應用應該自動檢測環境並使用正確的 base path
+
+### ServerAvatar Git 設置詳細步驟
+
+#### 步驟 1: 連接 GitHub 倉庫
+1. 在 ServerAvatar 應用設置頁面，找到 "Git Deployment" 選項
+2. 點擊 "Connect Repository" 或類似按鈕
+3. 選擇 GitHub 作為 Provider
+4. 授權 ServerAvatar 訪問您的 GitHub 帳號（如果需要）
+
+#### 步驟 2: 配置倉庫信息
+- **Repository（倉庫）：** `infotcjeff-ui/ZXS`
+  - 格式：`用戶名/倉庫名`
+  - 確保倉庫是公開的，或者 ServerAvatar 有權限訪問
+
+#### 步驟 3: 設置分支
+- **Branch（分支）：** `main`
+  - 這是項目的主分支
+  - 如果您的默認分支是 `master`，請使用 `master`
+
+#### 步驟 4: 配置構建設置
+在 "Build Settings" 或 "Deployment Settings" 中：
+
+- **Build Command（構建命令）：**
+  ```
+  npm run build:serveravatar
+  ```
+  
+- **Output Directory（輸出目錄）：**
+  ```
+  dist
+  ```
+  
+- **Node Version（Node 版本）：**
+  ```
+  20
+  ```
+  或
+  ```
+  20.x
+  ```
+
+#### 步驟 5: 保存並部署
+1. 點擊 "Save" 或 "Deploy" 按鈕
+2. ServerAvatar 會自動：
+   - 從 GitHub 拉取代碼
+   - 安裝依賴（`npm install`）
+   - 運行構建命令（`npm run build:serveravatar`）
+   - 部署 `dist` 文件夾中的內容
+
+#### 步驟 6: 驗證部署
+1. 等待部署完成（通常需要 2-5 分鐘）
+2. 訪問您的應用 URL
+3. 檢查瀏覽器控制台，應該看到：
+   - `Detected base path: /`
+   - `Hostname: jeff-zxs-sss.tempavatar.xyz`（或您的域名）
 
 ## 故障排除
 

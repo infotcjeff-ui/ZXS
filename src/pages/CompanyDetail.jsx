@@ -56,14 +56,13 @@ function CompanyDetailPage() {
   }, [id, getCompany, fetchUsers])
 
   useEffect(() => {
-    if (editing && formData) {
-      // Scroll to form and focus on name input
+    if (editing) {
+      // Only scroll to form when entering edit mode, don't focus to avoid interrupting user input
       setTimeout(() => {
         editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        nameInputRef.current?.focus()
       }, 100)
     }
-  }, [editing, formData])
+  }, [editing]) // Only trigger when editing state changes, not when formData changes
 
   const onDropFiles = (files) => {
     const list = Array.from(files)
@@ -286,8 +285,10 @@ function CompanyDetailPage() {
               {formData.media?.length > 0 ? (
                 <div className="space-y-3">
                   {formData.media.map((m) => (
-                    <div key={m.id} className="relative overflow-auto rounded-lg border border-white/10 bg-white/5 p-1 max-h-48">
-                      <img src={m.dataUrl} alt={m.name} className="w-full h-auto object-contain" />
+                    <div key={m.id} className="relative rounded-lg border border-white/10 bg-white/5 p-2">
+                      <div className="max-h-64 overflow-auto">
+                        <img src={m.dataUrl} alt={m.name} className="w-full h-auto object-contain" />
+                      </div>
                       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-slate-950/80 px-3 py-2 text-xs text-white">
                         <span className="truncate flex-1">
                           {m.isMain && <span className="text-emerald-300">主圖 • </span>}
@@ -327,12 +328,14 @@ function CompanyDetailPage() {
           ) : (
             <>
               {mainMedia?.dataUrl ? (
-                <div className="mb-4 max-h-96 overflow-auto rounded-xl border border-white/10 bg-white/5 p-2">
-                  <img
-                    src={mainMedia.dataUrl}
-                    alt={company.name}
-                    className="w-full h-auto object-contain"
-                  />
+                <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-2">
+                  <div className="max-h-96 overflow-auto">
+                    <img
+                      src={mainMedia.dataUrl}
+                      alt={company.name}
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="mb-4 aspect-video flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400">
@@ -344,8 +347,10 @@ function CompanyDetailPage() {
                   <h3 className="mb-2 text-sm font-semibold text-white">其他圖片</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {otherMedia.map((m) => (
-                      <div key={m.id} className="max-h-32 overflow-auto rounded-lg border border-white/10 bg-white/5 p-1">
-                        <img src={m.dataUrl} alt={m.name} className="w-full h-auto object-contain" />
+                      <div key={m.id} className="rounded-lg border border-white/10 bg-white/5 p-1">
+                        <div className="max-h-32 overflow-auto">
+                          <img src={m.dataUrl} alt={m.name} className="w-full h-auto object-contain" />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -355,81 +360,130 @@ function CompanyDetailPage() {
           )}
         </div>
 
-        {/* Right Column: All Form Fields */}
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">基本資訊</h2>
-            {editing && formData ? (
-              <div className="space-y-3 text-sm">
-                <div>
-                  <label className="text-xs text-slate-400">公司名稱 *</label>
-                  <input
-                    ref={nameInputRef}
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
-                  />
-                </div>
-                <InfoRowEditable label="地址" value={formData.address || ''} onChange={(v) => setFormData({ ...formData, address: v })} editing={editing} />
-                <InfoRowEditable label="電話" value={formData.phone || ''} onChange={(v) => setFormData({ ...formData, phone: v })} editing={editing} />
-                <InfoRowEditable label="網站" value={formData.website || ''} onChange={(v) => setFormData({ ...formData, website: v })} editing={editing} />
-                <InfoRowEditable label="備註" value={formData.notes || ''} onChange={(v) => setFormData({ ...formData, notes: v })} editing={editing} />
-              </div>
-            ) : (
-              <div className="space-y-3 text-sm">
-                <InfoRow label="地址" value={company.address} />
-                <InfoRow label="電話" value={company.phone} />
-                <InfoRow label="網站" value={company.website} />
-                <InfoRow label="備註" value={company.notes} />
-              </div>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">描述</h2>
-            {editing && formData ? (
-              <textarea
-                value={formData.description || ''}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
-                rows={6}
-              />
-            ) : (
-              <p className="text-sm text-slate-200/80 whitespace-pre-wrap">{company.description || '—'}</p>
-            )}
-          </div>
-
-          {/* Related Users */}
+        {/* Right Column: All Form Fields in One Section */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="mb-4 text-lg font-semibold text-white">公司資訊</h2>
           {editing && formData ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <h2 className="mb-4 text-lg font-semibold text-white">關聯用戶（可多選）</h2>
-              <div className="max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-3 scrollable-container">
-                {users.length === 0 ? (
-                  <p className="text-sm text-slate-400">暫無用戶</p>
-                ) : (
-                  <div className="space-y-2">
-                    {users.map((u) => {
-                      const isSelected = Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.includes(u.id)
-                      return (
-                        <label
-                          key={u.id}
-                          className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={(e) => {
-                              const currentIds = Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : []
-                              if (e.target.checked) {
-                                setFormData((c) => ({ ...c, relatedUserIds: [...currentIds, u.id] }))
-                              } else {
-                                setFormData((c) => ({ ...c, relatedUserIds: currentIds.filter((id) => id !== u.id) }))
-                              }
-                            }}
-                            className="h-4 w-4 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
-                          />
+            <div className="space-y-4 text-sm">
+              <div>
+                <label className="text-xs text-slate-400">公司名稱 *</label>
+                <input
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">地址</label>
+                <input
+                  value={formData.address || ''}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">電話</label>
+                <input
+                  value={formData.phone || ''}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">網站</label>
+                <input
+                  value={formData.website || ''}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">備註</label>
+                <input
+                  value={formData.notes || ''}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">描述</label>
+                <textarea
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                  rows={4}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs text-slate-400">關聯用戶（可多選）</label>
+                <div className="max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-3 scrollable-container">
+                  {users.length === 0 ? (
+                    <p className="text-sm text-slate-400">暫無用戶</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {users.map((u) => {
+                        const isSelected = Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.includes(u.id)
+                        return (
+                          <label
+                            key={u.id}
+                            className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const currentIds = Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : []
+                                if (e.target.checked) {
+                                  setFormData((c) => ({ ...c, relatedUserIds: [...currentIds, u.id] }))
+                                } else {
+                                  setFormData((c) => ({ ...c, relatedUserIds: currentIds.filter((id) => id !== u.id) }))
+                                }
+                              }}
+                              className="h-4 w-4 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-white">{u.name}</p>
+                              <p className="text-xs text-slate-300">{u.email}</p>
+                            </div>
+                            {u.role === 'admin' && (
+                              <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
+                                管理員
+                              </span>
+                            )}
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-slate-400">
+                  已選擇 {Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds.length : 0} 位用戶
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 text-sm">
+              <InfoRow label="地址" value={company.address} />
+              <InfoRow label="電話" value={company.phone} />
+              <InfoRow label="網站" value={company.website} />
+              <InfoRow label="備註" value={company.notes} />
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">描述</p>
+                <p className="mt-1 text-sm text-slate-200/80 whitespace-pre-wrap">{company.description || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">關聯用戶</p>
+                {(() => {
+                  const relatedUserIds = Array.isArray(company.relatedUserIds)
+                    ? company.relatedUserIds
+                    : company.relatedUserId
+                      ? [company.relatedUserId]
+                      : []
+                  const relatedUsers = users.filter(u => relatedUserIds.includes(u.id))
+                  return relatedUsers.length > 0 ? (
+                    <div className="space-y-2">
+                      {relatedUsers.map((u) => (
+                        <div key={u.id} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
                           <div className="flex-1">
                             <p className="text-sm font-semibold text-white">{u.name}</p>
                             <p className="text-xs text-slate-300">{u.email}</p>
@@ -439,46 +493,14 @@ function CompanyDetailPage() {
                               管理員
                             </span>
                           )}
-                        </label>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-              <p className="mt-2 text-xs text-slate-400">
-                已選擇 {Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds.length : 0} 位用戶
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <h2 className="mb-4 text-lg font-semibold text-white">關聯用戶</h2>
-              {(() => {
-                const relatedUserIds = Array.isArray(company.relatedUserIds)
-                  ? company.relatedUserIds
-                  : company.relatedUserId
-                    ? [company.relatedUserId]
-                    : []
-                const relatedUsers = users.filter(u => relatedUserIds.includes(u.id))
-                return relatedUsers.length > 0 ? (
-                  <div className="space-y-2">
-                    {relatedUsers.map((u) => (
-                      <div key={u.id} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-white">{u.name}</p>
-                          <p className="text-xs text-slate-300">{u.email}</p>
                         </div>
-                        {u.role === 'admin' && (
-                          <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
-                            管理員
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-400">暫無關聯用戶</p>
-                )
-              })()}
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400">暫無關聯用戶</p>
+                  )
+                })()}
+              </div>
             </div>
           )}
         </div>
