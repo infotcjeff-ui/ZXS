@@ -14,12 +14,11 @@ function CompaniesPage() {
   const loadCompanies = useCallback(async () => {
     setLoading(true)
     try {
-      const [list, userList] = await Promise.all([
-        fetchCompanies(),
-        fetchUsers()
-      ])
+      const list = fetchCompanies()
+      const userList = await fetchUsers()
       setCompanies(list || [])
       setUsers(userList || [])
+      console.log('Loaded companies:', list?.length || 0)
     } catch (error) {
       console.error('Error loading companies:', error)
       setCompanies([])
@@ -31,17 +30,29 @@ function CompaniesPage() {
 
   useEffect(() => {
     loadCompanies()
-    const handleUpdate = () => loadCompanies()
+    const handleUpdate = () => {
+      console.log('Companies update event received')
+      loadCompanies()
+    }
     const handleStorage = (e) => {
       if (e.key === 'zxs-companies' || !e.key) {
+        console.log('Storage event received for companies')
         loadCompanies()
       }
     }
     window.addEventListener('companies:update', handleUpdate)
     window.addEventListener('storage', handleStorage)
+    
+    // Also listen for focus event to refresh when returning to tab
+    const handleFocus = () => {
+      loadCompanies()
+    }
+    window.addEventListener('focus', handleFocus)
+    
     return () => {
       window.removeEventListener('companies:update', handleUpdate)
       window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('focus', handleFocus)
     }
   }, [loadCompanies])
 

@@ -85,20 +85,34 @@ function CompanyFormPage() {
       relatedUserIds: selectedUserIds,
     }
 
-    const result = company.id
-      ? updateCompany(company.id, payload)
-      : createCompany(payload)
+    try {
+      const result = company.id
+        ? updateCompany(company.id, payload)
+        : createCompany(payload)
 
-    if (!result.ok) {
-      setAlert({ kind: 'error', message: result.message })
+      console.log('Company save result:', result)
+      console.log('Saved company:', result.company)
+
+      if (!result.ok) {
+        setAlert({ kind: 'error', message: result.message })
+        setSaving(false)
+        return
+      }
+
+      setAlert({ kind: 'success', message: company.id ? '更新成功' : '建立成功' })
+      
+      // Dispatch event immediately
+      window.dispatchEvent(new Event('companies:update'))
+      
+      // Force a small delay to ensure localStorage is updated
+      setTimeout(() => {
+        navigate('/companies')
+      }, 500)
+    } catch (error) {
+      console.error('Error saving company:', error)
+      setAlert({ kind: 'error', message: '儲存時發生錯誤' })
       setSaving(false)
-      return
     }
-
-    setAlert({ kind: 'success', message: company.id ? '更新成功' : '建立成功' })
-    setTimeout(() => {
-      navigate('/companies')
-    }, 1000)
   }
 
   const onDropFiles = (files) => {

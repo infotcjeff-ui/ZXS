@@ -360,20 +360,36 @@ export function AuthProvider({ children }) {
   }, [])
 
   const createCompany = useCallback((payload) => {
-    const companies = loadCompanies()
-    const newCompany = {
-      id: crypto.randomUUID(),
-      ...payload,
-      media: Array.isArray(payload.media) ? payload.media : [],
-      gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
-      relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+    try {
+      const companies = loadCompanies()
+      const newCompany = {
+        id: crypto.randomUUID(),
+        ...payload,
+        media: Array.isArray(payload.media) ? payload.media : [],
+        gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
+        relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
+      companies.push(newCompany)
+      saveCompanies(companies)
+      console.log('Company created and saved to localStorage:', newCompany)
+      console.log('Total companies now:', companies.length)
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new Event('companies:update'))
+      
+      // Also trigger a custom storage event for same-tab updates
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'zxs-companies',
+        newValue: JSON.stringify(companies)
+      }))
+      
+      return { ok: true, company: newCompany }
+    } catch (error) {
+      console.error('Error creating company:', error)
+      return { ok: false, message: '建立公司時發生錯誤' }
     }
-    companies.push(newCompany)
-    saveCompanies(companies)
-    window.dispatchEvent(new Event('companies:update'))
-    return { ok: true, company: newCompany }
   }, [])
 
   const updateCompany = useCallback((id, payload) => {
