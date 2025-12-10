@@ -442,12 +442,18 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
       <div className="flex items-start justify-between gap-3">
         <Link to={`/companies/${company.id}`} className="flex flex-1 items-center gap-3 hover:opacity-80">
-          <div className="h-12 w-12 overflow-hidden rounded-xl bg-white/10">
+          <div className="h-12 w-12 overflow-hidden rounded-xl bg-white/10 relative">
             {mainMedia?.dataUrl ? (
               <img src={mainMedia.dataUrl} alt={company.name} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xs text-slate-300">
                 無圖片
+              </div>
+            )}
+            {galleryCount > 0 && (
+              <div className="absolute bottom-0 right-0 flex items-center gap-0.5 rounded-tl bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+                <span>📷</span>
+                <span>{galleryCount}</span>
               </div>
             )}
           </div>
