@@ -16,7 +16,6 @@ function CompanyDetailPage() {
   const [formData, setFormData] = useState(null)
   const [saving, setSaving] = useState(false)
   const editFormRef = useRef(null)
-  const nameInputRef = useRef(null)
   const dropRef = useRef(null)
 
   useEffect(() => {
