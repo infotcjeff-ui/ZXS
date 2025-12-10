@@ -68,6 +68,13 @@ function CompanyDetailPage() {
     }
   }, [editing]) // Only trigger when editing state changes, not when formData changes
 
+  // Reset gallery index when company changes
+  useEffect(() => {
+    if (company?.gallery && company.gallery.length > 0) {
+      setSelectedGalleryIndex(0)
+    }
+  }, [company?.id])
+
   const onDropFiles = (files, isGallery = false) => {
     const list = Array.from(files)
     if (!list.length) return
@@ -252,13 +259,6 @@ function CompanyDetailPage() {
       </div>
     )
   }
-
-  // Reset gallery index when company changes
-  useEffect(() => {
-    if (company?.gallery && company.gallery.length > 0) {
-      setSelectedGalleryIndex(0)
-    }
-  }, [company?.id])
 
   const mainMedia = company?.media?.find((m) => m.isMain) || (company?.media && company.media[0]) || null
   const otherMedia = company?.media?.filter((m) => !m.isMain) || []
