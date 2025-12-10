@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider.jsx'
 import AlertBanner from '../components/AlertBanner.jsx'
 
 function CompaniesPage() {
   const { session, fetchCompanies, deleteCompany, fetchUsers } = useAuth()
+  const location = useLocation()
   const [companies, setCompanies] = useState([])
   const [users, setUsers] = useState([])
   const [view, setView] = useState('grid')
@@ -27,6 +28,13 @@ function CompaniesPage() {
       setLoading(false)
     }
   }, [fetchCompanies, fetchUsers])
+
+  // Reload when navigating to this page
+  useEffect(() => {
+    if (location.pathname === '/companies') {
+      loadCompanies()
+    }
+  }, [location.pathname, loadCompanies])
 
   useEffect(() => {
     loadCompanies()
