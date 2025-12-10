@@ -43,15 +43,27 @@
           }
         });
       }
-      // Add cache busting
-      const timestamp = new Date().getTime();
+      // Debug: Log current location
+      console.log('Current location:', window.location.href);
+      console.log('Base path should be:', '/ZXS/');
+      
+      // Check if we're on the correct path
+      if (!window.location.pathname.startsWith('/ZXS/')) {
+        console.warn('Path mismatch! Redirecting...');
+        window.location.replace('/ZXS/');
+      }
+      
       // Remove loading message once React starts rendering
       window.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, checking for React...');
         setTimeout(function() {
           const root = document.getElementById('root');
           if (root && root.children.length === 0) {
+            console.error('React failed to render after 5 seconds');
             // If still empty after 5 seconds, show error
-            root.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 1rem;"><h1 style="color: #e2e8f0;">載入失敗</h1><p style="color: #94a3b8;">請檢查瀏覽器控制台或嘗試清除緩存後重新載入</p><button onclick="window.location.reload(true)" style="padding: 0.75rem 1.5rem; background: linear-gradient(to right, #10b981, #0ea5e9); color: white; border: none; border-radius: 0.5rem; cursor: pointer;">重新載入</button></div>';
+            root.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 1rem; padding: 2rem;"><h1 style="color: #e2e8f0; font-size: 1.5rem;">載入失敗</h1><p style="color: #94a3b8; text-align: center;">請檢查瀏覽器控制台或嘗試清除緩存後重新載入</p><p style="color: #64748b; font-size: 0.875rem;">如果問題持續，請檢查 Network 標籤查看哪些資源無法載入</p><button onclick="window.location.reload(true)" style="padding: 0.75rem 1.5rem; background: linear-gradient(to right, #10b981, #0ea5e9); color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">重新載入</button></div>';
+          } else {
+            console.log('React rendered successfully');
           }
         }, 5000);
       });
