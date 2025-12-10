@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除公司圖片數據</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+        }
+        .container {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .danger {
+            background: #f44336;
+        }
+        .danger:hover {
+            background: #da190b;
+        }
+        .info {
+            background: #2196F3;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>清除公司圖片數據工具</h1>
+        <div class="info">
+            <p><strong>說明：</strong>此工具會清除 localStorage 中所有公司的圖片數據（media 和 gallery），但保留其他公司信息。</p>
+            <p><strong>操作：</strong>點擊下方按鈕執行操作</p>
+        </div>
+        
+        <div>
+            <button onclick="checkData()">檢查當前數據</button>
+            <button onclick="clearImages()" class="danger">清除所有圖片</button>
+            <button onclick="clearAll()" class="danger">清除所有公司數據</button>
+        </div>
+        
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const COMPANIES_KEY = 'zxs-companies';
+
+        function checkData() {
+            const resultDiv = document.getElementById('result');
+            try {
+                const raw = localStorage.getItem(COMPANIES_KEY);
+                if (!raw) {
+                    resultDiv.innerHTML = '<div class="info">沒有找到公司數據</div>';
+                    return;
+                }
+                
+                const companies = JSON.parse(raw);
+                let totalSize = 0;
+                let totalImages = 0;
+                
+                companies.forEach(company => {
+                    const companySize = JSON.stringify(company).length;
+                    totalSize += companySize;
+                    totalImages += (company.media?.length || 0) + (company.gallery?.length || 0);
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="info">
+                        <h3>數據統計：</h3>
+                        <p>公司數量：${companies.length}</p>
+                        <p>總圖片數：${totalImages}</p>
+                        <p>總數據大小：${(totalSize / 1024).toFixed(2)} KB</p>
+                        <p>總數據大小（含圖片）：${(raw.length / 1024).toFixed(2)} KB</p>
+                        <h4>各公司詳情：</h4>
+                        <pre>${JSON.stringify(companies.map(c => ({
+                            name: c.name,
+                            mediaCount: c.media?.length || 0,
+                            galleryCount: c.gallery?.length || 0
+                        })), null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="info" style="background: #f44336;">錯誤：${error.message}</div>`;
+            }
+        }
+
+        function clearImages() {
+            if (!confirm('確定要清除所有公司的圖片數據嗎？此操作無法復原！')) {
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result');
+            try {
+                const raw = localStorage.getItem(COMPANIES_KEY);
+                if (!raw) {
+                    resultDiv.innerHTML = '<div class="info">沒有找到公司數據</div>';
+                    return;
+                }
+                
+                const companies = JSON.parse(raw);
+                let clearedCount = 0;
+                let totalImagesRemoved = 0;
+                
+                companies.forEach(company => {
+                    const imagesRemoved = (company.media?.length || 0) + (company.gallery?.length || 0);
+                    if (imagesRemoved > 0) {
+                        clearedCount++;
+                        totalImagesRemoved += imagesRemoved;
+                    }
+                    company.media = [];
+                    company.gallery = [];
+                });
+                
+                localStorage.setItem(COMPANIES_KEY, JSON.stringify(companies));
+                
+                const newSize = JSON.stringify(companies).length;
+                const oldSize = raw.length;
+                const saved = oldSize - newSize;
+                
+                resultDiv.innerHTML = `
+                    <div class="info" style="background: #4CAF50;">
+                        <h3>清除完成！</h3>
+                        <p>已清除 ${clearedCount} 個公司的圖片數據</p>
+                        <p>共移除 ${totalImagesRemoved} 張圖片</p>
+                        <p>節省空間：${(saved / 1024).toFixed(2)} KB</p>
+                        <p>新數據大小：${(newSize / 1024).toFixed(2)} KB</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="info" style="background: #f44336;">錯誤：${error.message}</div>`;
+            }
+        }
+
+        function clearAll() {
+            if (!confirm('確定要清除所有公司數據嗎？此操作無法復原！')) {
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result');
+            try {
+                localStorage.removeItem(COMPANIES_KEY);
+                resultDiv.innerHTML = '<div class="info" style="background: #4CAF50;">所有公司數據已清除</div>';
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="info" style="background: #f44336;">錯誤：${error.message}</div>`;
+            }
+        }
+
+        // Auto check on load
+        window.onload = checkData;
+    </script>
+</body>
+</html>
