@@ -8,6 +8,9 @@ const blankCompany = {
   name: '',
   address: '',
   description: '',
+  phone: '',
+  website: '',
+  notes: '',
   media: [],
   gallery: [],
   relatedUserIds: [],
@@ -78,6 +81,9 @@ function CompanyFormPage() {
       name: company.name.trim(),
       address: company.address || '',
       description: company.description || '',
+      phone: company.phone || '',
+      website: company.website || '',
+      notes: company.notes || '',
       media: Array.isArray(company.media) ? company.media : [],
       gallery: Array.isArray(company.gallery) ? company.gallery : [],
       ownerEmail: firstSelectedUser?.email || company.ownerEmail || session?.email || 'unknown@zxsgit.local',
@@ -478,6 +484,36 @@ function CompanyFormPage() {
                   onChange={(e) => setCompany((c) => ({ ...c, description: e.target.value }))}
                   className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
                   rows={4}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">電話</label>
+                <input
+                  type="tel"
+                  value={company.phone || ''}
+                  onChange={(e) => setCompany((c) => ({ ...c, phone: e.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                  placeholder="+852 1234 5678"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">網站</label>
+                <input
+                  type="url"
+                  value={company.website || ''}
+                  onChange={(e) => setCompany((c) => ({ ...c, website: e.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                  placeholder="https://example.com"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">備註</label>
+                <textarea
+                  value={company.notes || ''}
+                  onChange={(e) => setCompany((c) => ({ ...c, notes: e.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
+                  rows={2}
+                  placeholder="額外的備註信息..."
                 />
               </div>
               <div>
