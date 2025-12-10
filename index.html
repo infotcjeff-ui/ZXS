@@ -14,7 +14,7 @@
       #root {
         min-height: 100vh;
       }
-      /* Loading fallback */
+      /* Loading fallback - only show if root is truly empty */
       #root:empty::before {
         content: '載入中...';
         display: flex;
@@ -22,8 +22,40 @@
         justify-content: center;
         min-height: 100vh;
         font-family: system-ui, sans-serif;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+      }
+      /* Hide loading once React renders */
+      #root:not(:empty)::before {
+        display: none;
       }
     </style>
+    <script>
+      // Clear any cached data and force reload if needed
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+      // Add cache busting
+      const timestamp = new Date().getTime();
+      // Remove loading message once React starts rendering
+      window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          const root = document.getElementById('root');
+          if (root && root.children.length === 0) {
+            // If still empty after 5 seconds, show error
+            root.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 1rem;"><h1 style="color: #e2e8f0;">載入失敗</h1><p style="color: #94a3b8;">請檢查瀏覽器控制台或嘗試清除緩存後重新載入</p><button onclick="window.location.reload(true)" style="padding: 0.75rem 1.5rem; background: linear-gradient(to right, #10b981, #0ea5e9); color: white; border: none; border-radius: 0.5rem; cursor: pointer;">重新載入</button></div>';
+          }
+        }, 5000);
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
