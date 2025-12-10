@@ -4,6 +4,7 @@ const AuthContext = createContext(null)
 const SESSION_KEY = 'zxs-auth-session'
 const USERS_KEY = 'zxs-users'
 const TODOS_KEY = 'zxs-todos-all'
+const COMPANIES_KEY = 'zxs-companies'
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
 const passwordRules = ['Any password is accepted (use strong passwords for safety).']
@@ -44,6 +45,24 @@ const saveTodos = (todos) => {
     localStorage.setItem(TODOS_KEY, JSON.stringify(todos))
   } catch (err) {
     console.error('Unable to save todos', err)
+  }
+}
+
+const loadCompanies = () => {
+  try {
+    const raw = localStorage.getItem(COMPANIES_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch (err) {
+    console.error('Unable to load companies', err)
+    return []
+  }
+}
+
+const saveCompanies = (companies) => {
+  try {
+    localStorage.setItem(COMPANIES_KEY, JSON.stringify(companies))
+  } catch (err) {
+    console.error('Unable to save companies', err)
   }
 }
 
@@ -331,6 +350,63 @@ export function AuthProvider({ children }) {
   const fetchTodos = useCallback(() => loadTodos(), [])
   const saveAllTodos = useCallback((todos) => saveTodos(todos), [])
 
+  const fetchCompanies = useCallback(() => {
+    return loadCompanies()
+  }, [])
+
+  const getCompany = useCallback((id) => {
+    const companies = loadCompanies()
+    return companies.find(c => c.id === id) || null
+  }, [])
+
+  const createCompany = useCallback((payload) => {
+    const companies = loadCompanies()
+    const newCompany = {
+      id: crypto.randomUUID(),
+      ...payload,
+      media: Array.isArray(payload.media) ? payload.media : [],
+      gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
+      relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    companies.push(newCompany)
+    saveCompanies(companies)
+    window.dispatchEvent(new Event('companies:update'))
+    return { ok: true, company: newCompany }
+  }, [])
+
+  const updateCompany = useCallback((id, payload) => {
+    const companies = loadCompanies()
+    const index = companies.findIndex(c => c.id === id)
+    if (index < 0) {
+      return { ok: false, message: '公司不存在' }
+    }
+    companies[index] = {
+      ...companies[index],
+      ...payload,
+      id: companies[index].id,
+      media: Array.isArray(payload.media) ? payload.media : companies[index].media || [],
+      gallery: Array.isArray(payload.gallery) ? payload.gallery : companies[index].gallery || [],
+      relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
+      updatedAt: Date.now(),
+    }
+    saveCompanies(companies)
+    window.dispatchEvent(new Event('companies:update'))
+    return { ok: true, company: companies[index] }
+  }, [])
+
+  const deleteCompany = useCallback((id) => {
+    const companies = loadCompanies()
+    const filtered = companies.filter(c => c.id !== id)
+    if (filtered.length === companies.length) {
+      return { ok: false, message: '公司不存在' }
+    }
+    saveCompanies(filtered)
+    window.dispatchEvent(new Event('companies:update'))
+    return { ok: true, message: '公司已刪除' }
+  }, [])
+
   const value = useMemo(
     () => ({
       session,
@@ -344,9 +420,14 @@ export function AuthProvider({ children }) {
       updateSelf,
       fetchTodos,
       saveAllTodos,
+      fetchCompanies,
+      getCompany,
+      createCompany,
+      updateCompany,
+      deleteCompany,
       passwordRules,
     }),
-    [session, fetchUsers, deleteUser, fetchTodos, saveAllTodos],
+    [session, fetchUsers, deleteUser, fetchTodos, saveAllTodos, fetchCompanies, getCompany, createCompany, updateCompany, deleteCompany],
   )
 
   try {
