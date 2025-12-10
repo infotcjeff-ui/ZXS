@@ -479,7 +479,7 @@ function CompanyDetailPage() {
                 </div>
               )}
               
-              {/* Gallery Display - Match Image 1 style */}
+              {/* Gallery Display - Under main image */}
               {company.gallery && company.gallery.length > 0 && (
                 <div className="mb-4">
                   <h3 className="mb-3 text-sm font-semibold text-white">圖庫</h3>

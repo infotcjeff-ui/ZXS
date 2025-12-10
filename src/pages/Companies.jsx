@@ -561,38 +561,62 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
       <div className="flex items-start justify-between gap-3">
-        <Link to={`/companies/${company.id}`} className="flex flex-1 items-center gap-3 hover:opacity-80">
-          <div className="h-12 w-12 overflow-hidden rounded-xl bg-white/10 relative">
+        <Link to={`/companies/${company.id}`} className="flex flex-1 flex-col gap-3 hover:opacity-80">
+          {/* Main Image */}
+          <div className="relative w-full overflow-hidden rounded-xl bg-white/10">
             {mainMedia?.dataUrl ? (
-              <img src={mainMedia.dataUrl} alt={company.name} className="h-full w-full object-cover" />
+              <img src={mainMedia.dataUrl} alt={company.name} className="h-48 w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-slate-300">
+              <div className="flex h-48 w-full items-center justify-center text-xs text-slate-300">
                 無圖片
               </div>
             )}
             {galleryCount > 0 && (
-              <div className="absolute bottom-0 right-0 flex items-center gap-0.5 rounded-tl bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+              <div className="absolute top-2 right-2 flex items-center gap-0.5 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
                 <span>📷</span>
                 <span>{galleryCount}</span>
               </div>
             )}
           </div>
-          <div className="flex-1">
-            <p className="text-lg font-semibold text-white">{company.name}</p>
-            <p className="text-xs text-slate-300">擁有者：{company.ownerName || company.ownerEmail}</p>
-            {relatedUsers.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                <span className="text-xs text-slate-400">關聯用戶：</span>
-                {relatedUsers.map((u) => (
-                  <span
-                    key={u.id}
-                    className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200"
-                  >
-                    {u.name}
-                  </span>
-                ))}
-              </div>
-            )}
+          
+          {/* Gallery Preview - Show first 4 gallery images */}
+          {company.gallery && company.gallery.length > 0 && (
+            <div className="grid grid-cols-4 gap-2">
+              {company.gallery.slice(0, 4).map((g, idx) => (
+                <div key={g.id || idx} className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                  <img 
+                    src={g.dataUrl} 
+                    alt={`Gallery ${idx + 1}`} 
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+              {company.gallery.length > 4 && (
+                <div className="relative aspect-square flex items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/50 text-xs text-white">
+                  +{company.gallery.length - 4}
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <p className="text-lg font-semibold text-white">{company.name}</p>
+              <p className="text-xs text-slate-300">擁有者：{company.ownerName || company.ownerEmail}</p>
+              {relatedUsers.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <span className="text-xs text-slate-400">關聯用戶：</span>
+                  {relatedUsers.map((u) => (
+                    <span
+                      key={u.id}
+                      className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200"
+                    >
+                      {u.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </Link>
         <div className="flex items-center gap-2">
