@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
 import { useAuth } from '../auth/AuthProvider.jsx'
 
 function MetricCard({ label, value, trend, tone }) {
@@ -26,19 +25,7 @@ function MetricCard({ label, value, trend, tone }) {
 }
 
 function Dashboard() {
-  const { session, logout, fetchTodos, fetchCompanies, fetchUsers } = useAuth()
-  const [companies, setCompanies] = useState([])
-  const [users, setUsers] = useState([])
-
-  useEffect(() => {
-    const load = async () => {
-      const list = await fetchCompanies()
-      setCompanies(list)
-      const userList = await fetchUsers()
-      setUsers(userList)
-    }
-    load()
-  }, [fetchCompanies, fetchUsers])
+  const { session, logout, fetchTodos } = useAuth()
 
   const todos = useMemo(() => fetchTodos(), [fetchTodos])
   const todoStats = useMemo(() => {
@@ -53,27 +40,6 @@ function Dashboard() {
     }
   }, [todos, session?.email])
 
-  const myCompanies = useMemo(
-    () => companies.filter((c) => {
-      const ownerMatch = c.ownerEmail?.toLowerCase() === session?.email?.toLowerCase()
-      const relatedMatch = Array.isArray(c.relatedUserIds) 
-        ? c.relatedUserIds.includes(session?.email)
-        : c.relatedUserId && users.find(u => u.id === c.relatedUserId)?.email === session?.email
-      return ownerMatch || relatedMatch
-    }),
-    [companies, session?.email, users],
-  )
-
-  const getRelatedUsers = (company) => {
-    if (Array.isArray(company.relatedUserIds)) {
-      return users.filter(u => company.relatedUserIds.includes(u.email))
-    }
-    if (company.relatedUserId) {
-      const user = users.find(u => u.id === company.relatedUserId)
-      return user ? [user] : []
-    }
-    return []
-  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 lg:py-14">
@@ -152,62 +118,6 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-white">您的公司</p>
-              <p className="text-sm text-slate-200/80">
-                與您帳戶關聯的公司。可在公司頁面進行管理。
-              </p>
-            </div>
-          </div>
-          {myCompanies.length === 0 ? (
-            <p className="text-sm text-slate-200/70">尚無公司資料。</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {myCompanies.map((c) => {
-                const mainMedia = c.media?.find((m) => m.isMain) || (c.media && c.media[0]) || null
-                const relatedUsers = getRelatedUsers(c)
-                return (
-                  <Link
-                    key={c.id}
-                    to={`/companies/${c.id}`}
-                    className="group rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/20 transition hover:border-sky-400/50 hover:bg-white/10"
-                  >
-                    {mainMedia?.dataUrl && (
-                      <div className="mb-3 aspect-video overflow-hidden rounded-xl bg-white/10">
-                        <img
-                          src={mainMedia.dataUrl}
-                          alt={c.name}
-                          className="h-full w-full object-cover transition group-hover:scale-105"
-                        />
-                      </div>
-                    )}
-                    <p className="text-base font-semibold text-white group-hover:text-sky-200">{c.name}</p>
-                    <p className="mt-1 text-xs text-slate-300">
-                      擁有者：{c.ownerName || c.ownerEmail}
-                    </p>
-                    {relatedUsers.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {relatedUsers.map((u) => (
-                          <span
-                            key={u.id}
-                            className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200"
-                          >
-                            {u.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <p className="mt-2 text-sm text-slate-200/80">{c.address || '無地址'}</p>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }

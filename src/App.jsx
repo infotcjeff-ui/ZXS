@@ -5,9 +5,6 @@ import Dashboard from './pages/Dashboard.jsx'
 import TodoPage from './pages/Todo.jsx'
 import AdminPage from './pages/Admin.jsx'
 import ProfilePage from './pages/Profile.jsx'
-import CompaniesPage from './pages/Companies.jsx'
-import CompanyFormPage from './pages/CompanyForm.jsx'
-import CompanyDetailPage from './pages/CompanyDetail.jsx'
 import PostGeneratorPage from './pages/PostGenerator.jsx'
 import ProductsPage from './pages/Products.jsx'
 import ProductDetailPage from './pages/ProductDetail.jsx'
@@ -21,8 +18,7 @@ function NavBar() {
   const navLink = (path, label) => {
     // Check if current path matches or starts with the nav path
     const isCurrentPath = location.pathname === path || 
-      (path !== '/' && location.pathname.startsWith(path)) ||
-      (path === '/companies' && (location.pathname.startsWith('/companies/new') || location.pathname.startsWith('/companies/edit')))
+      (path !== '/' && location.pathname.startsWith(path))
     return (
       <Link
         to={path}
@@ -51,7 +47,6 @@ function NavBar() {
           {!isAuthenticated && navLink('/login', '登入')}
           {!isAuthenticated && navLink('/register', '註冊')}
           {isAuthenticated && navLink('/', '主控台')}
-          {isAuthenticated && navLink('/companies', '公司')}
           {isAuthenticated && navLink('/products', '產品')}
           {isAuthenticated && navLink('/todos', '待辦清單')}
           {isAuthenticated && navLink('/posts', '貼文產生')}
@@ -102,38 +97,6 @@ function AppShell() {
               element={
                 <ProtectedRoute>
                   <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/companies"
-              element={
-                <ProtectedRoute>
-                  <CompaniesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/companies/new"
-              element={
-                <ProtectedRoute>
-                  <CompanyFormPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/companies/edit/:id"
-              element={
-                <ProtectedRoute>
-                  <CompanyFormPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/companies/:id"
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'member']}>
-                  <CompanyDetailPage />
                 </ProtectedRoute>
               }
             />
