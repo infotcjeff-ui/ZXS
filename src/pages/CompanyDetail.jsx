@@ -15,8 +15,10 @@ function CompanyDetailPage() {
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(0)
   const editFormRef = useRef(null)
   const dropRef = useRef(null)
+  const galleryDropRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -32,6 +34,7 @@ function CompanyDetailPage() {
           setFormData({
             ...data,
             media: Array.isArray(data.media) ? data.media : [],
+            gallery: Array.isArray(data.gallery) ? data.gallery : [],
             relatedUserIds: Array.isArray(data.relatedUserIds)
               ? data.relatedUserIds
               : data.relatedUserId
@@ -63,9 +66,24 @@ function CompanyDetailPage() {
     }
   }, [editing]) // Only trigger when editing state changes, not when formData changes
 
-  const onDropFiles = (files) => {
+  const onDropFiles = (files, isGallery = false) => {
     const list = Array.from(files)
     if (!list.length) return
+    
+    // Limit gallery to 5 images
+    if (isGallery) {
+      const currentGallery = formData?.gallery || []
+      const remainingSlots = 5 - currentGallery.length
+      if (remainingSlots <= 0) {
+        setAlert({ kind: 'error', message: '圖庫最多只能上傳 5 張圖片' })
+        return
+      }
+      if (list.length > remainingSlots) {
+        setAlert({ kind: 'error', message: `圖庫最多只能上傳 5 張圖片，您只能再上傳 ${remainingSlots} 張` })
+        list.splice(remainingSlots)
+      }
+    }
+    
     const readers = list.map(
       (file) =>
         new Promise((resolve) => {
@@ -76,39 +94,66 @@ function CompanyDetailPage() {
         }),
     )
     Promise.all(readers).then((media) => {
-      setFormData((c) => {
-        const existing = c.media || []
-        const next =
-          existing.length === 0 && media.length
-            ? media.map((m, idx) => ({ ...m, isMain: idx === 0 }))
-            : media
-        return { ...c, media: [...existing, ...next] }
-      })
+      if (isGallery) {
+        setFormData((c) => ({
+          ...c,
+          gallery: [...(c.gallery || []), ...media]
+        }))
+      } else {
+        setFormData((c) => {
+          const existing = c.media || []
+          const next =
+            existing.length === 0 && media.length
+              ? media.map((m, idx) => ({ ...m, isMain: idx === 0 }))
+              : media
+          return { ...c, media: [...existing, ...next] }
+        })
+      }
     })
   }
 
   useEffect(() => {
     if (!editing) return
     const el = dropRef.current
-    if (!el) return
+    const galleryEl = galleryDropRef.current
+    if (!el && !galleryEl) return
     const prevent = (e) => {
       e.preventDefault()
       e.stopPropagation()
     }
     const handleDrop = (e) => {
       prevent(e)
-      onDropFiles(e.dataTransfer.files)
+      onDropFiles(e.dataTransfer.files, false)
     }
-    el.addEventListener('dragover', prevent)
-    el.addEventListener('drop', handleDrop)
+    const handleGalleryDrop = (e) => {
+      prevent(e)
+      onDropFiles(e.dataTransfer.files, true)
+    }
+    if (el) {
+      el.addEventListener('dragover', prevent)
+      el.addEventListener('drop', handleDrop)
+    }
+    if (galleryEl) {
+      galleryEl.addEventListener('dragover', prevent)
+      galleryEl.addEventListener('drop', handleGalleryDrop)
+    }
     return () => {
-      el.removeEventListener('dragover', prevent)
-      el.removeEventListener('drop', handleDrop)
+      if (el) {
+        el.removeEventListener('dragover', prevent)
+        el.removeEventListener('drop', handleDrop)
+      }
+      if (galleryEl) {
+        galleryEl.removeEventListener('dragover', prevent)
+        galleryEl.removeEventListener('drop', handleGalleryDrop)
+      }
     }
-  }, [editing])
+  }, [editing, formData])
 
   const removeMedia = (mid) =>
     setFormData((c) => ({ ...c, media: (c.media || []).filter((m) => m.id !== mid) }))
+
+  const removeGalleryImage = (gid) =>
+    setFormData((c) => ({ ...c, gallery: (c.gallery || []).filter((g) => g.id !== gid) }))
 
   const handleDelete = async () => {
     if (!confirm(`確定要刪除公司 "${company.name}"？此操作無法復原。`)) return
@@ -139,6 +184,7 @@ function CompanyDetailPage() {
         description: formData.description || '',
         notes: formData.notes || '',
         media: Array.isArray(formData.media) ? formData.media : [],
+        gallery: Array.isArray(formData.gallery) ? formData.gallery : [],
         ownerEmail: formData.ownerEmail || company.ownerEmail,
         ownerName: formData.ownerName || company.ownerName,
         relatedUserIds: Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : [],
@@ -150,11 +196,26 @@ function CompanyDetailPage() {
         return
       }
       setAlert({ kind: 'success', message: '更新成功' })
-      // Reload company data
-      const updated = await getCompany(id)
+      // Reload company data and users
+      const [updated, updatedUsers] = await Promise.all([
+        getCompany(id),
+        fetchUsers()
+      ])
       if (updated) {
         setCompany(updated)
-        setFormData(updated)
+          setFormData({
+            ...updated,
+            media: Array.isArray(updated.media) ? updated.media : [],
+            gallery: Array.isArray(updated.gallery) ? updated.gallery : [],
+            relatedUserIds: Array.isArray(updated.relatedUserIds)
+              ? updated.relatedUserIds
+              : updated.relatedUserId
+                ? [updated.relatedUserId]
+                : [],
+          })
+      }
+      if (updatedUsers) {
+        setUsers(updatedUsers)
       }
       window.dispatchEvent(new Event('companies:update'))
       setTimeout(() => {
@@ -214,29 +275,6 @@ function CompanyDetailPage() {
             >
               編輯
             </button>
-          )}
-          {canEdit && editing && (
-            <>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || !formData?.name?.trim()}
-                className="rounded-lg bg-gradient-to-r from-emerald-500 to-sky-500 px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-60"
-              >
-                {saving ? '儲存中...' : '儲存'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditing(false)
-                  setFormData(company)
-                }}
-                disabled={saving}
-                className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/15 disabled:opacity-60"
-              >
-                取消
-              </button>
-            </>
           )}
           {canDelete && !editing && (
             <button
@@ -323,6 +361,54 @@ function CompanyDetailPage() {
               ) : (
                 <p className="text-sm text-slate-400 text-center py-4">暫無圖片</p>
               )}
+              
+              {/* Gallery Section */}
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-semibold text-white">圖庫（最多 5 張）</h3>
+                <div
+                  ref={galleryDropRef}
+                  className="mb-3 rounded-lg border border-dashed border-purple-400/50 bg-purple-400/5 px-3 py-4 text-center text-xs text-purple-100"
+                >
+                  拖放圖片到此或點擊上傳
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => onDropFiles(e.target.files, true)}
+                    className="mt-2 hidden"
+                    id="gallery-input-detail"
+                    disabled={(formData?.gallery?.length || 0) >= 5}
+                  />
+                  <label
+                    htmlFor="gallery-input-detail"
+                    className={`mt-2 inline-block cursor-pointer rounded px-3 py-1 text-xs ${
+                      (formData?.gallery?.length || 0) >= 5
+                        ? 'bg-slate-500/20 text-slate-400 cursor-not-allowed'
+                        : 'bg-purple-500/20 text-purple-200 hover:bg-purple-500/30'
+                    }`}
+                  >
+                    {(formData?.gallery?.length || 0) >= 5 ? '已達上限（5 張）' : `選擇圖片 (${formData?.gallery?.length || 0}/5)`}
+                  </label>
+                </div>
+                {formData?.gallery && formData.gallery.length > 0 && (
+                  <div className="space-y-2">
+                    {formData.gallery.map((g) => (
+                      <div key={g.id} className="relative rounded-lg border border-white/10 bg-white/5 p-2">
+                        <div className="max-h-32 overflow-auto">
+                          <img src={g.dataUrl} alt={g.name} className="w-full h-auto object-contain" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryImage(g.id)}
+                          className="absolute top-2 right-2 rounded bg-rose-500/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-rose-500"
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -341,6 +427,91 @@ function CompanyDetailPage() {
                   無主圖片
                 </div>
               )}
+              
+              {/* Gallery Display */}
+              {company.gallery && company.gallery.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="mb-3 text-sm font-semibold text-white">圖庫</h3>
+                  {/* Main Gallery Image Display */}
+                  <div className="mb-3 rounded-xl border border-white/10 bg-white/5 p-2">
+                    <div className="max-h-96 overflow-auto">
+                      <img
+                        src={company.gallery[selectedGalleryIndex]?.dataUrl}
+                        alt={`Gallery ${selectedGalleryIndex + 1}`}
+                        className="w-full h-auto object-contain"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Gallery Thumbnail Grid (4 images with arrows) */}
+                  {company.gallery.length > 1 && (
+                    <div className="relative">
+                      <div className="flex items-center gap-2">
+                        {/* Left Arrow */}
+                        {selectedGalleryIndex > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedGalleryIndex(Math.max(0, selectedGalleryIndex - 1))}
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
+                          >
+                            ←
+                          </button>
+                        )}
+                        {selectedGalleryIndex === 0 && <div className="w-10" />}
+                        
+                        {/* Thumbnail Grid (4 images, showing current viewport) */}
+                        <div className="flex-1 grid grid-cols-4 gap-2">
+                          {(() => {
+                            // Calculate which 4 images to show
+                            const startIdx = Math.max(0, Math.min(selectedGalleryIndex - 1, company.gallery.length - 4))
+                            const endIdx = Math.min(startIdx + 4, company.gallery.length)
+                            return company.gallery.slice(startIdx, endIdx).map((g, idx) => {
+                              const actualIdx = startIdx + idx
+                              return (
+                                <button
+                                  key={g.id}
+                                  type="button"
+                                  onClick={() => setSelectedGalleryIndex(actualIdx)}
+                                  className={`rounded-lg border-2 overflow-hidden transition ${
+                                    selectedGalleryIndex === actualIdx
+                                      ? 'border-sky-400 bg-sky-400/20'
+                                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                                  }`}
+                                >
+                                  <div className="aspect-square overflow-hidden">
+                                    <img
+                                      src={g.dataUrl}
+                                      alt={`Thumbnail ${actualIdx + 1}`}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                </button>
+                              )
+                            })
+                          })()}
+                        </div>
+                        
+                        {/* Right Arrow */}
+                        {selectedGalleryIndex < company.gallery.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedGalleryIndex(Math.min(company.gallery.length - 1, selectedGalleryIndex + 1))}
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
+                          >
+                            →
+                          </button>
+                        )}
+                        {selectedGalleryIndex >= company.gallery.length - 1 && <div className="w-10" />}
+                      </div>
+                      {/* Gallery Counter */}
+                      <p className="mt-2 text-center text-xs text-slate-400">
+                        {selectedGalleryIndex + 1} / {company.gallery.length}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {otherMedia.length > 0 && (
                 <div>
                   <h3 className="mb-2 text-sm font-semibold text-white">其他圖片</h3>
@@ -458,6 +629,37 @@ function CompanyDetailPage() {
                 <p className="mt-2 text-xs text-slate-400">
                   已選擇 {Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds.length : 0} 位用戶
                 </p>
+              </div>
+              {/* Save/Cancel Buttons */}
+              <div className="flex justify-end gap-2 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving || !formData?.name?.trim()}
+                  className="rounded-lg bg-gradient-to-r from-emerald-500 to-sky-500 px-6 py-2 text-sm font-semibold text-white shadow disabled:opacity-60"
+                >
+                  {saving ? '儲存中...' : '儲存'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(false)
+          setFormData({
+            ...company,
+            media: Array.isArray(company.media) ? company.media : [],
+            gallery: Array.isArray(company.gallery) ? company.gallery : [],
+            relatedUserIds: Array.isArray(company.relatedUserIds)
+              ? company.relatedUserIds
+              : company.relatedUserId
+                ? [company.relatedUserId]
+                : [],
+          })
+                  }}
+                  disabled={saving}
+                  className="rounded-lg bg-white/10 px-6 py-2 text-sm font-semibold text-slate-200 hover:bg-white/15 disabled:opacity-60"
+                >
+                  取消
+                </button>
               </div>
             </div>
           ) : (

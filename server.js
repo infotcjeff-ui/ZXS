@@ -225,6 +225,7 @@ app.post('/api/companies', (req, res) => {
     description: payload.description ?? '',
     notes: payload.notes ?? '',
     media: Array.isArray(payload.media) ? payload.media : [],
+    gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
     ownerEmail: payload.ownerEmail ?? 'unknown@zxsgit.local',
     ownerName: payload.ownerName ?? 'Unknown',
     relatedUserId: payload.relatedUserId || null,
@@ -252,6 +253,7 @@ app.put('/api/companies/:id', (req, res) => {
   target.description = payload.description ?? target.description
   target.notes = payload.notes ?? target.notes
   target.media = Array.isArray(payload.media) ? payload.media : target.media
+  target.gallery = Array.isArray(payload.gallery) ? payload.gallery : (target.gallery || [])
   target.ownerEmail = payload.ownerEmail ?? target.ownerEmail
   target.ownerName = payload.ownerName ?? target.ownerName
   target.relatedUserId = payload.relatedUserId !== undefined ? payload.relatedUserId : target.relatedUserId

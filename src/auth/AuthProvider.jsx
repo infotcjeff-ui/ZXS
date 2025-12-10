@@ -216,18 +216,37 @@ export function AuthProvider({ children }) {
     
     // Merge users, prioritizing backend data but including localStorage users
     const userMap = new Map()
+    const emailMap = new Map() // Track by email to remove duplicates
     
     // Add backend users first
     backendUsers.forEach(user => {
-      userMap.set(user.id, user)
-    })
-    
-    // Add localStorage users (if not already in map)
-    localUsers.forEach(user => {
-      if (!userMap.has(user.id)) {
+      const email = user.email?.toLowerCase()
+      if (email && !emailMap.has(email)) {
         userMap.set(user.id, user)
+        emailMap.set(email, user.id)
       }
     })
+    
+    // Add localStorage users (if not already in map by ID or email)
+    localUsers.forEach(user => {
+      const email = user.email?.toLowerCase()
+      if (email && !emailMap.has(email) && !userMap.has(user.id)) {
+        userMap.set(user.id, user)
+        emailMap.set(email, user.id)
+      }
+    })
+    
+    // Remove duplicate admin users (keep the one with the correct email)
+    const adminUsers = Array.from(userMap.values()).filter(u => 
+      u.email?.toLowerCase() === 'admin@zxsgit.local'
+    )
+    if (adminUsers.length > 1) {
+      // Keep the first one, remove others
+      const keepAdmin = adminUsers[0]
+      adminUsers.slice(1).forEach(dup => {
+        userMap.delete(dup.id)
+      })
+    }
     
     // Convert map to array and sort by createdAt
     return Array.from(userMap.values()).sort((a, b) => {
