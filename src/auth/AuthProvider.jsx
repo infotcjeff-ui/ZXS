@@ -418,23 +418,43 @@ export function AuthProvider({ children }) {
         return { ok: false, message: '公司不存在' }
       }
       
-      // Always update media and gallery from payload if provided
+      console.log('updateCompany: Received payload media:', payload.media?.length || 0)
+      console.log('updateCompany: Received payload gallery:', payload.gallery?.length || 0)
+      
+      // Always update media and gallery from payload - ensure they are arrays
       const updatedCompany = {
         ...companies[index],
-        ...payload,
+        name: payload.name !== undefined ? payload.name : companies[index].name,
+        address: payload.address !== undefined ? payload.address : companies[index].address,
+        description: payload.description !== undefined ? payload.description : companies[index].description,
+        phone: payload.phone !== undefined ? payload.phone : companies[index].phone,
+        website: payload.website !== undefined ? payload.website : companies[index].website,
+        notes: payload.notes !== undefined ? payload.notes : companies[index].notes,
+        ownerEmail: payload.ownerEmail || companies[index].ownerEmail,
+        ownerName: payload.ownerName || companies[index].ownerName,
         id: companies[index].id, // Preserve ID
-        media: Array.isArray(payload.media) ? payload.media : (payload.media === undefined ? companies[index].media || [] : []),
-        gallery: Array.isArray(payload.gallery) ? payload.gallery : (payload.gallery === undefined ? companies[index].gallery || [] : []),
+        media: Array.isArray(payload.media) ? payload.media : [],
+        gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
         relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
+        createdAt: companies[index].createdAt || Date.now(),
         updatedAt: Date.now(),
       }
+      
+      console.log('updateCompany: Updated company media count:', updatedCompany.media?.length || 0)
+      console.log('updateCompany: Updated company gallery count:', updatedCompany.gallery?.length || 0)
+      console.log('updateCompany: Media data sample:', updatedCompany.media?.[0] ? { id: updatedCompany.media[0].id, hasDataUrl: !!updatedCompany.media[0].dataUrl, name: updatedCompany.media[0].name } : 'none')
+      console.log('updateCompany: Gallery data sample:', updatedCompany.gallery?.[0] ? { id: updatedCompany.gallery[0].id, hasDataUrl: !!updatedCompany.gallery[0].dataUrl, name: updatedCompany.gallery[0].name } : 'none')
       
       companies[index] = updatedCompany
       saveCompanies(companies)
       
-      console.log('Company updated in localStorage:', updatedCompany)
-      console.log('Updated media count:', updatedCompany.media?.length || 0)
-      console.log('Updated gallery count:', updatedCompany.gallery?.length || 0)
+      // Verify the save
+      const savedCompanies = loadCompanies()
+      const savedCompany = savedCompanies.find(c => c.id === id)
+      if (savedCompany) {
+        console.log('updateCompany: Verified saved company media count:', savedCompany.media?.length || 0)
+        console.log('updateCompany: Verified saved company gallery count:', savedCompany.gallery?.length || 0)
+      }
       
       // Dispatch event to notify other components
       window.dispatchEvent(new Event('companies:update'))
