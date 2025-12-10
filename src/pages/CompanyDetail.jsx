@@ -728,8 +728,28 @@ function CompanyDetailPage() {
                   
                   console.log('Resolved relatedUserIds:', relatedUserIds)
                   
-                  const relatedUsers = users.filter(u => u && u.id && relatedUserIds.includes(u.id))
+                  const relatedUsers = users.filter(u => {
+                    if (!u || !u.id) {
+                      console.log('Skipping invalid user:', u)
+                      return false
+                    }
+                    const isRelated = relatedUserIds.includes(u.id)
+                    if (isRelated) {
+                      console.log('Found related user:', u.name, 'ID:', u.id)
+                    }
+                    return isRelated
+                  })
                   console.log('Filtered relatedUsers:', relatedUsers)
+                  console.log('Users array length:', users.length)
+                  console.log('RelatedUserIds array:', relatedUserIds)
+                  console.log('User IDs in users array:', users.map(u => u?.id).filter(Boolean))
+                  
+                  // Additional validation
+                  if (relatedUserIds.length > 0 && relatedUsers.length === 0) {
+                    console.error('MISMATCH: relatedUserIds exist but no users matched!')
+                    console.error('Looking for IDs:', relatedUserIds)
+                    console.error('Available user IDs:', users.map(u => u?.id).filter(Boolean))
+                  }
                   
                   return relatedUsers.length > 0 ? (
                     <div className="space-y-2">
