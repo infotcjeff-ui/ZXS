@@ -207,6 +207,42 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
   const removeMedia = (mid) =>
     setFormData((c) => ({ ...c, media: (c.media || []).filter((m) => m.id !== mid) }))
 
+  const onDropGalleryFiles = (files) => {
+    const list = Array.from(files)
+    if (!list.length) return
+    
+    // Limit gallery to 5 images
+    const currentGallery = formData?.gallery || []
+    const remainingSlots = 5 - currentGallery.length
+    if (remainingSlots <= 0) {
+      setAlert({ kind: 'error', message: '圖庫最多只能上傳 5 張圖片' })
+      return
+    }
+    if (list.length > remainingSlots) {
+      setAlert({ kind: 'error', message: `圖庫最多只能上傳 5 張圖片，您只能再上傳 ${remainingSlots} 張` })
+      list.splice(remainingSlots)
+    }
+    
+    const readers = list.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () =>
+            resolve({ id: crypto.randomUUID(), name: file.name, dataUrl: reader.result })
+          reader.readAsDataURL(file)
+        }),
+    )
+    Promise.all(readers).then((gallery) => {
+      setFormData((c) => ({
+        ...c,
+        gallery: [...(c.gallery || []), ...gallery]
+      }))
+    })
+  }
+
+  const removeGalleryImage = (gid) =>
+    setFormData((c) => ({ ...c, gallery: (c.gallery || []).filter((g) => g.id !== gid) }))
+
   const mainMedia =
     company.media?.find((m) => m.isMain) || (company.media && company.media[0]) || null
   const galleryCount = company.gallery?.length || 0
@@ -381,6 +417,47 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
             <p className="mt-1 text-xs text-slate-400">
               已選擇 {Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds.length : 0} 位用戶
             </p>
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold text-slate-200/80">圖庫（最多 5 張）</label>
+            <div className="mb-3 rounded-lg border border-dashed border-purple-400/50 bg-purple-400/5 px-3 py-4 text-center text-xs text-purple-100">
+              拖放圖片到此或點擊上傳
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => onDropGalleryFiles(e.target.files)}
+                className="mt-2 hidden"
+                id={`gallery-input-${company.id}`}
+                disabled={(formData?.gallery?.length || 0) >= 5}
+              />
+              <label
+                htmlFor={`gallery-input-${company.id}`}
+                className={`mt-2 inline-block cursor-pointer rounded px-3 py-1 text-xs ${
+                  (formData?.gallery?.length || 0) >= 5
+                    ? 'bg-slate-500/20 text-slate-400 cursor-not-allowed'
+                    : 'bg-purple-500/20 text-purple-200 hover:bg-purple-500/30'
+                }`}
+              >
+                {(formData?.gallery?.length || 0) >= 5 ? '已達上限（5 張）' : `選擇圖片 (${formData?.gallery?.length || 0}/5)`}
+              </label>
+            </div>
+            {formData?.gallery && formData.gallery.length > 0 && (
+              <div className="mb-3 grid grid-cols-3 gap-2">
+                {formData.gallery.map((g) => (
+                  <div key={g.id} className="relative overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                    <img src={g.dataUrl} alt={g.name} className="h-20 w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(g.id)}
+                      className="absolute top-1 right-1 rounded bg-rose-500/80 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-rose-500"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>

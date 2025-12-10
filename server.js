@@ -256,9 +256,23 @@ app.put('/api/companies/:id', (req, res) => {
   target.gallery = Array.isArray(payload.gallery) ? payload.gallery : (target.gallery || [])
   target.ownerEmail = payload.ownerEmail ?? target.ownerEmail
   target.ownerName = payload.ownerName ?? target.ownerName
-  target.relatedUserId = payload.relatedUserId !== undefined ? payload.relatedUserId : target.relatedUserId
-  target.relatedUserIds = Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : (target.relatedUserIds || [])
+  // Always update relatedUserIds from payload if provided
+  if (payload.relatedUserIds !== undefined) {
+    target.relatedUserIds = Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : []
+    // Also update relatedUserId for backward compatibility (use first one if array has items)
+    target.relatedUserId = Array.isArray(payload.relatedUserIds) && payload.relatedUserIds.length > 0 
+      ? payload.relatedUserIds[0] 
+      : null
+  } else if (payload.relatedUserId !== undefined) {
+    // If only relatedUserId is provided, update both
+    target.relatedUserId = payload.relatedUserId
+    target.relatedUserIds = payload.relatedUserId ? [payload.relatedUserId] : []
+  }
   target.updatedAt = Date.now()
+
+  console.log('Updating company:', target.id)
+  console.log('Updated relatedUserIds:', target.relatedUserIds)
+  console.log('Updated relatedUserId:', target.relatedUserId)
 
   saveData(data)
   return res.json({ ok: true, company: target })

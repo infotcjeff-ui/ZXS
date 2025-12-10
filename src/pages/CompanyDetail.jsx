@@ -210,6 +210,10 @@ function CompanyDetailPage() {
         getCompany(id),
         fetchUsers()
       ])
+      
+      console.log('After save - Updated company:', updated)
+      console.log('After save - Updated users:', updatedUsers)
+      
       if (updated) {
         // Ensure all fields are properly initialized
         const normalizedCompany = {
@@ -222,6 +226,10 @@ function CompanyDetailPage() {
               ? [updated.relatedUserId]
               : [],
         }
+        
+        console.log('After save - Normalized company:', normalizedCompany)
+        console.log('After save - Normalized relatedUserIds:', normalizedCompany.relatedUserIds)
+        
         setCompany(normalizedCompany)
         setFormData(normalizedCompany)
       }
@@ -687,12 +695,23 @@ function CompanyDetailPage() {
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">關聯用戶</p>
                 {(() => {
+                  // Debug: Log company data
+                  console.log('Company data:', company)
+                  console.log('Users data:', users)
+                  console.log('Company relatedUserIds:', company.relatedUserIds)
+                  console.log('Company relatedUserId:', company.relatedUserId)
+                  
                   const relatedUserIds = Array.isArray(company.relatedUserIds)
                     ? company.relatedUserIds
                     : company.relatedUserId
                       ? [company.relatedUserId]
                       : []
-                  const relatedUsers = users.filter(u => relatedUserIds.includes(u.id))
+                  
+                  console.log('Resolved relatedUserIds:', relatedUserIds)
+                  
+                  const relatedUsers = users.filter(u => u && u.id && relatedUserIds.includes(u.id))
+                  console.log('Filtered relatedUsers:', relatedUsers)
+                  
                   return relatedUsers.length > 0 ? (
                     <div className="space-y-2">
                       {relatedUsers.map((u) => (
