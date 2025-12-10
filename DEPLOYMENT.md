@@ -1,12 +1,29 @@
 # GitHub Pages 部署指南
 
-## 步驟 1: 啟用 GitHub Pages
+## ⚠️ 重要：必須使用 GitHub Actions 部署！
 
-1. 前往您的 GitHub 倉庫：`https://github.com/infotcjeff-ui/ZXS`
-2. 點擊 **Settings**（設置）標籤
-3. 在左側菜單中找到 **Pages**
-4. 在 **Source** 部分，選擇 **GitHub Actions**
-5. 點擊 **Save**（保存）
+**如果您的 GitHub Pages 設置顯示 "Deploy from a branch"，請立即更改！**
+
+這會導致網站無法載入，因為它會嘗試提供源代碼而不是構建後的文件。
+
+## 步驟 1: 啟用 GitHub Pages（正確設置）
+
+1. 前往您的 GitHub 倉庫：`https://github.com/infotcjeff-ui/ZXS/settings/pages`
+2. 在 **"Build and deployment"** 部分，找到 **"Source"** 下拉選單
+3. **必須選擇：** **"GitHub Actions"**（不是 "Deploy from a branch"）
+4. 點擊 **Save**（保存）
+
+### 如何確認設置正確？
+
+✅ **正確設置：**
+- Source 顯示：**"GitHub Actions"**
+- 部署信息顯示："Last deployed by pages build and deployment workflow"
+
+❌ **錯誤設置：**
+- Source 顯示："Deploy from a branch"
+- 顯示分支和文件夾選擇器
+
+**如果看到錯誤設置，請立即更改！**
 
 ## 步驟 2: 觸發部署
 
