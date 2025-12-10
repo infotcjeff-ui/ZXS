@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider.jsx'
 
 function MetricCard({ label, value, trend, tone }) {
@@ -25,7 +26,10 @@ function MetricCard({ label, value, trend, tone }) {
 }
 
 function Dashboard() {
-  const { session, logout, fetchTodos } = useAuth()
+  const { session, logout, fetchTodos, fetchCompanies, fetchUsers } = useAuth()
+  const [companies, setCompanies] = useState([])
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const todos = useMemo(() => fetchTodos(), [fetchTodos])
   const todoStats = useMemo(() => {
@@ -39,6 +43,59 @@ function Dashboard() {
       pending: total - done,
     }
   }, [todos, session?.email])
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const companyList = fetchCompanies()
+        const userList = await fetchUsers()
+        setCompanies(companyList || [])
+        setUsers(userList || [])
+      } catch (error) {
+        console.error('Error loading companies:', error)
+        setCompanies([])
+        setUsers([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+
+    // Listen for company updates
+    const handleUpdate = () => {
+      const companyList = fetchCompanies()
+      setCompanies(companyList || [])
+    }
+    window.addEventListener('companies:update', handleUpdate)
+    return () => {
+      window.removeEventListener('companies:update', handleUpdate)
+    }
+  }, [fetchCompanies, fetchUsers])
+
+  // Get companies related to current user
+  const myCompanies = useMemo(() => {
+    if (!session?.email) return []
+    return companies.filter((c) => {
+      // Check if user is owner
+      if (c.ownerEmail?.toLowerCase() === session.email.toLowerCase()) return true
+      // Check if user is in relatedUserIds
+      if (Array.isArray(c.relatedUserIds) && c.relatedUserIds.length > 0) {
+        return c.relatedUserIds.some((uid) => {
+          const user = users.find((u) => u.id === uid)
+          return user?.email?.toLowerCase() === session.email.toLowerCase()
+        })
+      }
+      return false
+    })
+  }, [companies, users, session?.email])
+
+  const getRelatedUsers = (company) => {
+    if (!users || users.length === 0) return []
+    if (Array.isArray(company.relatedUserIds) && company.relatedUserIds.length > 0) {
+      return users.filter(u => u && u.id && company.relatedUserIds.includes(u.id))
+    }
+    return []
+  }
 
 
   return (
@@ -115,6 +172,96 @@ function Dashboard() {
               <p className="mt-2 text-sm text-slate-200/70">僅限管理員。</p>
             )}
           </div>
+        </div>
+
+        {/* Companies Section */}
+        <div className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">已連接的公司</h2>
+            <Link
+              to="/companies"
+              className="text-sm font-semibold text-sky-400 hover:text-sky-300 transition"
+            >
+              查看全部 →
+            </Link>
+          </div>
+          
+          {loading ? (
+            <p className="text-sm text-slate-200/70">載入中...</p>
+          ) : myCompanies.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+              <p className="text-sm text-slate-200/70">您目前沒有連接的公司</p>
+              <Link
+                to="/companies/new"
+                className="mt-3 inline-block rounded-lg bg-gradient-to-r from-emerald-500 to-sky-500 px-4 py-2 text-sm font-semibold text-white shadow hover:opacity-90 transition"
+              >
+                建立新公司
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {myCompanies.map((company) => {
+                const mainMedia = company?.media?.find((m) => m.isMain) || (company?.media && company.media[0]) || null
+                const relatedUsers = getRelatedUsers(company)
+                
+                return (
+                  <Link
+                    key={company.id}
+                    to={`/companies/${company.id}`}
+                    className="group rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30 backdrop-blur transition hover:border-white/20 hover:bg-white/10"
+                  >
+                    {mainMedia ? (
+                      <div className="mb-3 aspect-video overflow-hidden rounded-lg">
+                        <img
+                          src={mainMedia.dataUrl}
+                          alt={company.name}
+                          className="h-full w-full object-cover transition group-hover:scale-105"
+                        />
+                      </div>
+                    ) : (
+                      <div className="mb-3 aspect-video rounded-lg bg-slate-800/50 flex items-center justify-center">
+                        <span className="text-xs text-slate-400">無圖片</span>
+                      </div>
+                    )}
+                    
+                    <h3 className="mb-2 text-lg font-semibold text-white group-hover:text-sky-300 transition">
+                      {company.name || '未命名公司'}
+                    </h3>
+                    
+                    {company.address && (
+                      <p className="mb-2 text-xs text-slate-200/70 line-clamp-1">
+                        📍 {company.address}
+                      </p>
+                    )}
+                    
+                    {relatedUsers.length > 0 && (
+                      <div className="mb-2 flex flex-wrap gap-1">
+                        {relatedUsers.slice(0, 3).map((user) => (
+                          <span
+                            key={user.id}
+                            className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-200"
+                          >
+                            {user.name}
+                          </span>
+                        ))}
+                        {relatedUsers.length > 3 && (
+                          <span className="rounded-full bg-slate-500/20 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                            +{relatedUsers.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {company.description && (
+                      <p className="text-xs text-slate-200/60 line-clamp-2">
+                        {company.description}
+                      </p>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 

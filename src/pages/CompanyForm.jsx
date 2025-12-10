@@ -143,28 +143,86 @@ function CompanyFormPage() {
     }
   }
 
+  // Compress image to reduce localStorage size
+  const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          let width = img.width
+          let height = img.height
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width
+              width = maxWidth
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height
+              height = maxHeight
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, width, height)
+
+          // Convert to compressed data URL
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
+          resolve({
+            id: crypto.randomUUID(),
+            name: file.name,
+            dataUrl: compressedDataUrl,
+            isMain: false,
+          })
+        }
+        img.src = e.target.result
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
   const onDropFiles = (files) => {
     const list = Array.from(files)
     if (!list.length) return
-    const readers = list.map(
-      (file) =>
-        new Promise((resolve) => {
-          const reader = new FileReader()
-          reader.onload = () =>
-            resolve({ id: crypto.randomUUID(), name: file.name, dataUrl: reader.result, isMain: false })
-          reader.readAsDataURL(file)
-        }),
-    )
-    Promise.all(readers).then((media) => {
-      setCompany((c) => {
-        const existing = c.media || []
-        const next =
-          existing.length === 0 && media.length
-            ? media.map((m, idx) => ({ ...m, isMain: idx === 0 }))
-            : media
-        return { ...c, media: [...existing, ...next] }
+    
+    // Filter only image files
+    const imageFiles = list.filter(file => file.type.startsWith('image/'))
+    if (imageFiles.length === 0) {
+      setAlert({ kind: 'error', message: '請選擇圖片檔案' })
+      return
+    }
+
+    // Check file size (warn if > 5MB before compression)
+    const largeFiles = imageFiles.filter(f => f.size > 5 * 1024 * 1024)
+    if (largeFiles.length > 0) {
+      setAlert({ kind: 'error', message: '圖片檔案過大，請選擇較小的圖片（建議 < 5MB）' })
+      return
+    }
+
+    const readers = imageFiles.map(file => compressImage(file))
+    Promise.all(readers)
+      .then((media) => {
+        setCompany((c) => {
+          const existing = c.media || []
+          const next =
+            existing.length === 0 && media.length
+              ? media.map((m, idx) => ({ ...m, isMain: idx === 0 }))
+              : media
+          return { ...c, media: [...existing, ...next] }
+        })
+        setAlert({ kind: 'success', message: `已上傳 ${media.length} 張圖片（已壓縮）` })
       })
-    })
+      .catch((error) => {
+        console.error('Error compressing images:', error)
+        setAlert({ kind: 'error', message: '圖片處理失敗: ' + error.message })
+      })
   }
 
   const onDropGalleryFiles = (files) => {
@@ -178,26 +236,39 @@ function CompanyFormPage() {
       setAlert({ kind: 'error', message: '圖庫最多只能上傳 5 張圖片' })
       return
     }
-    if (list.length > remainingSlots) {
-      setAlert({ kind: 'error', message: `圖庫最多只能上傳 5 張圖片，您只能再上傳 ${remainingSlots} 張` })
-      list.splice(remainingSlots)
+    
+    // Filter only image files
+    const imageFiles = list.filter(file => file.type.startsWith('image/'))
+    if (imageFiles.length === 0) {
+      setAlert({ kind: 'error', message: '請選擇圖片檔案' })
+      return
     }
 
-    const readers = list.map(
-      (file) =>
-        new Promise((resolve) => {
-          const reader = new FileReader()
-          reader.onload = () =>
-            resolve({ id: crypto.randomUUID(), name: file.name, dataUrl: reader.result })
-          reader.readAsDataURL(file)
-        }),
-    )
-    Promise.all(readers).then((gallery) => {
-      setCompany((c) => ({
-        ...c,
-        gallery: [...(c.gallery || []), ...gallery]
-      }))
-    })
+    // Check file size (warn if > 5MB before compression)
+    const largeFiles = imageFiles.filter(f => f.size > 5 * 1024 * 1024)
+    if (largeFiles.length > 0) {
+      setAlert({ kind: 'error', message: '圖片檔案過大，請選擇較小的圖片（建議 < 5MB）' })
+      return
+    }
+
+    if (imageFiles.length > remainingSlots) {
+      setAlert({ kind: 'error', message: `圖庫最多只能上傳 5 張圖片，您只能再上傳 ${remainingSlots} 張` })
+      imageFiles.splice(remainingSlots)
+    }
+
+    const readers = imageFiles.map(file => compressImage(file))
+    Promise.all(readers)
+      .then((gallery) => {
+        setCompany((c) => ({
+          ...c,
+          gallery: [...(c.gallery || []), ...gallery]
+        }))
+        setAlert({ kind: 'success', message: `已上傳 ${gallery.length} 張圖片到圖庫（已壓縮）` })
+      })
+      .catch((error) => {
+        console.error('Error compressing gallery images:', error)
+        setAlert({ kind: 'error', message: '圖片處理失敗: ' + error.message })
+      })
   }
 
   useEffect(() => {
