@@ -43,7 +43,26 @@ function CompanyDetailPage() {
           }
           setCompany(normalizedCompany)
           setFormData(normalizedCompany)
-          setUsers(userList)
+          setUsers(userList || [])
+          
+          // Debug: Verify data after setting
+          console.log('After setting state - Company:', normalizedCompany)
+          console.log('After setting state - Users:', userList)
+          console.log('After setting state - RelatedUserIds:', normalizedCompany.relatedUserIds)
+          
+          // Additional check: verify users can be matched
+          if (normalizedCompany.relatedUserIds && normalizedCompany.relatedUserIds.length > 0) {
+            const matchedUsers = (userList || []).filter(u => u && u.id && normalizedCompany.relatedUserIds.includes(u.id))
+            console.log('Matched users count:', matchedUsers.length)
+            if (matchedUsers.length === 0) {
+              console.warn('No users matched! RelatedUserIds:', normalizedCompany.relatedUserIds)
+              console.warn('Available user IDs:', (userList || []).map(u => u?.id))
+            }
+          }
+        } else if (active && !data) {
+          console.error('Company data is null or undefined for ID:', id)
+        } else if (active) {
+          console.warn('Component unmounted before data loaded')
         }
       } catch (error) {
         console.error('Error loading company data:', error)
