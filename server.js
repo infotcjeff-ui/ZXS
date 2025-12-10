@@ -276,10 +276,14 @@ app.put('/api/companies/:id', (req, res) => {
   target.updatedAt = Date.now()
 
   console.log('Updating company:', target.id)
+  console.log('Updated name:', target.name)
+  console.log('Updated gallery count:', target.gallery?.length || 0)
+  console.log('Updated media count:', target.media?.length || 0)
   console.log('Updated relatedUserIds:', target.relatedUserIds)
   console.log('Updated relatedUserId:', target.relatedUserId)
 
   saveData(data)
+  console.log('Company saved successfully to data.json')
   return res.json({ ok: true, company: target })
 })
 
