@@ -344,14 +344,9 @@ export function AuthProvider({ children }) {
       updateSelf,
       fetchTodos,
       saveAllTodos,
-      fetchCompanies,
-      getCompany,
-      createCompany,
-      updateCompany,
-      deleteCompany,
       passwordRules,
     }),
-    [session, fetchUsers, deleteUser, fetchTodos, saveAllTodos, fetchCompanies, getCompany, createCompany, updateCompany, deleteCompany],
+    [session, fetchUsers, deleteUser, fetchTodos, saveAllTodos],
   )
 
   try {
