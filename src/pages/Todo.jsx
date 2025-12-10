@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider.jsx'
 
 function TodoPage() {
@@ -56,11 +56,11 @@ function TodoPage() {
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/30 backdrop-blur">
         <div className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200/70">
-            Todos
+            待辦事項
           </p>
-          <h1 className="text-3xl font-semibold text-white">Your tasks</h1>
+          <h1 className="text-3xl font-semibold text-white">您的任務</h1>
           <p className="text-sm text-slate-200/80">
-            Tasks are stored per user in your browser. Mark them done or remove when finished.
+            任務會按用戶儲存在瀏覽器中。完成後可標記為已完成或刪除。
           </p>
         </div>
 
@@ -71,18 +71,18 @@ function TodoPage() {
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addItem()}
               className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
-              placeholder="Add a new todo…"
+              placeholder="新增待辦事項…"
             />
             <button
               type="button"
               onClick={addItem}
               className="rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-900/40 transition hover:from-sky-400 hover:to-indigo-400"
             >
-              Add
+              新增
             </button>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-200/80">
-            <span>View:</span>
+            <span>檢視：</span>
             <button
               type="button"
               onClick={() => setView('list')}
@@ -90,7 +90,7 @@ function TodoPage() {
                 view === 'list' ? 'bg-white/15 text-white' : 'bg-white/5 text-slate-200'
               }`}
             >
-              Column
+              列表
             </button>
             <button
               type="button"
@@ -99,7 +99,7 @@ function TodoPage() {
                 view === 'grid' ? 'bg-white/15 text-white' : 'bg-white/5 text-slate-200'
               }`}
             >
-              Grid
+              網格
             </button>
           </div>
           <button
@@ -107,13 +107,13 @@ function TodoPage() {
             onClick={saveNow}
             className="rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold text-slate-100 ring-1 ring-white/10 transition hover:bg-white/15"
           >
-            Save
+            儲存
           </button>
         </div>
 
         <div className="mt-6">
           {items.length === 0 && (
-            <p className="text-sm text-slate-200/70">No tasks yet. Add your first one!</p>
+            <p className="text-sm text-slate-200/70">尚無任務。新增您的第一個任務！</p>
           )}
           <div
             className={
@@ -152,7 +152,7 @@ function TodoCard({ item, toggle, remove, canEdit }) {
         <div className="flex flex-col">
           <span className={item.done ? 'line-through text-slate-400' : ''}>{item.text}</span>
           <span className="text-xs text-slate-400">
-            By {item.userName || 'Unknown'} • {item.userEmail || '—'}
+            由 {item.userName || '未知'} • {item.userEmail || '—'}
           </span>
         </div>
       </div>
@@ -162,7 +162,7 @@ function TodoCard({ item, toggle, remove, canEdit }) {
           onClick={() => remove(item.id)}
           className="text-xs font-semibold text-rose-200 hover:text-rose-100"
         >
-          Remove
+          刪除
         </button>
       )}
     </div>

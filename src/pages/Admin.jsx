@@ -19,7 +19,7 @@ function AdminPage() {
         if (Array.isArray(data)) {
           setUsers(data)
           if (data.length === 0) {
-            setError('No users found. Please register a user first.')
+              setError('找不到用戶。請先註冊用戶。')
           } else {
             setError(null)
           }
@@ -29,7 +29,7 @@ function AdminPage() {
         }
       } catch (err) {
         console.error('Error loading users:', err)
-        setError('Unable to load users. Please check backend connection.')
+        setError('無法載入用戶。請檢查後端連接。')
         setUsers([])
       }
       setLoading(false)
@@ -61,9 +61,9 @@ function AdminPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200/70">
             Admin
           </p>
-          <h1 className="text-3xl font-semibold text-white">User registry</h1>
+          <h1 className="text-3xl font-semibold text-white">用戶註冊表</h1>
           <p className="text-sm text-slate-200/80">
-            Admin account: <span className="font-semibold text-white">admin@zxsgit.local</span>{' '}
+            管理員帳號：<span className="font-semibold text-white">admin@zxsgit.local</span>{' '}
             / <span className="font-semibold text-white">admin321</span>
           </p>
         </div>
@@ -78,12 +78,12 @@ function AdminPage() {
             <CopyCSSButton />
           </div>
           {loading ? (
-            <p className="text-sm text-slate-200/80">Loading users…</p>
+            <p className="text-sm text-slate-200/80">載入用戶中…</p>
           ) : (
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40">
               <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
                 <p className="text-sm font-semibold text-white">
-                  Total registered: {users.length}
+                  總註冊數：{users.length}
                 </p>
               </div>
               <div className="divide-y divide-white/5">
@@ -97,7 +97,7 @@ function AdminPage() {
                       if (!res.ok) setError(res.message)
                       else {
                         setError(null)
-                        setBanner('User updated')
+                        setBanner('用戶已更新')
                         setUsers(await fetchUsers())
                       }
                       setSavingId(null)
@@ -109,7 +109,7 @@ function AdminPage() {
                       if (!res.ok) setError(res.message)
                       else {
                         setError(null)
-                        setBanner(res.message || 'User deleted')
+                        setBanner(res.message || '用戶已刪除')
                         setUsers(await fetchUsers())
                       }
                       setDeletingId(null)
@@ -152,7 +152,7 @@ function UserRow({ user, onSave, onDelete, saving, deleting }) {
         />
       </div>
       <div>
-        <p className="text-xs text-slate-400">Email</p>
+        <p className="text-xs text-slate-400">電子郵件</p>
         <input
           value={form.email}
           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
@@ -160,7 +160,7 @@ function UserRow({ user, onSave, onDelete, saving, deleting }) {
         />
       </div>
       <div>
-        <p className="text-xs text-slate-400">Role</p>
+        <p className="text-xs text-slate-400">角色</p>
         <select
           value={form.role}
           onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
@@ -171,7 +171,7 @@ function UserRow({ user, onSave, onDelete, saving, deleting }) {
         </select>
       </div>
       <div>
-        <p className="text-xs text-slate-400">Created</p>
+        <p className="text-xs text-slate-400">建立時間</p>
         <p className="text-sm text-slate-200">
           {user.createdAt ? new Date(user.createdAt).toLocaleString() : '—'}
         </p>
@@ -183,7 +183,7 @@ function UserRow({ user, onSave, onDelete, saving, deleting }) {
           disabled={saving || deleting}
           className="rounded-lg bg-gradient-to-r from-emerald-500 to-sky-500 px-3 py-2 text-xs font-semibold text-white shadow disabled:opacity-60"
         >
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? '儲存中…' : '儲存'}
         </button>
         {!isAdmin && (
           <button
@@ -192,7 +192,7 @@ function UserRow({ user, onSave, onDelete, saving, deleting }) {
             disabled={saving || deleting}
             className="rounded-lg bg-gradient-to-r from-rose-500 to-red-500 px-3 py-2 text-xs font-semibold text-white shadow disabled:opacity-60"
           >
-            {deleting ? 'Deleting…' : 'Delete'}
+            {deleting ? '刪除中…' : '刪除'}
           </button>
         )}
       </div>

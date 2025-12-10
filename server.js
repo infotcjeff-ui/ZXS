@@ -228,6 +228,7 @@ app.post('/api/companies', (req, res) => {
     ownerEmail: payload.ownerEmail ?? 'unknown@zxsgit.local',
     ownerName: payload.ownerName ?? 'Unknown',
     relatedUserId: payload.relatedUserId || null,
+    relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }

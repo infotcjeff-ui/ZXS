@@ -20,7 +20,7 @@ function ProfilePage() {
     setSaving(false)
     setAlert({
       kind: res.ok ? 'success' : 'error',
-      message: res.message || (res.ok ? 'Profile updated' : 'Update failed'),
+      message: res.message || (res.ok ? '個人資料已更新' : '更新失敗'),
     })
     if (res.ok) setForm((f) => ({ ...f, password: '' }))
   }
@@ -30,11 +30,11 @@ function ProfilePage() {
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/30 backdrop-blur">
         <div className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200/70">
-            User Information
+            用戶資訊
           </p>
-          <h1 className="text-3xl font-semibold text-white">Your account</h1>
+          <h1 className="text-3xl font-semibold text-white">您的帳戶</h1>
           <p className="text-sm text-slate-200/80">
-            View your details and update name, email, or password. Changes refresh your session.
+            查看您的詳細資訊並更新名稱、電子郵件或密碼。更改會刷新您的會話。
           </p>
           <div className="mt-2">
             <button
@@ -42,17 +42,17 @@ function ProfilePage() {
               onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
               className="rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-sky-900/40 transition hover:from-sky-400 hover:to-indigo-400"
             >
-              Edit info
+              編輯資訊
             </button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <InfoCard label="Name" value={session?.name} />
-          <InfoCard label="Email" value={session?.email} />
-          <InfoCard label="Role" value={session?.role} />
+          <InfoCard label="名稱" value={session?.name} />
+          <InfoCard label="電子郵件" value={session?.email} />
+          <InfoCard label="角色" value={session?.role === 'admin' ? '管理員' : '成員'} />
           <InfoCard
-            label="Signed in at"
+            label="登入時間"
             value={session?.signedInAt ? new Date(session.signedInAt).toLocaleString() : '—'}
           />
         </div>
@@ -63,15 +63,15 @@ function ProfilePage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-white">Edit profile</p>
-              <p className="text-xs text-slate-200/70">Update your own information here.</p>
+              <p className="text-sm font-semibold text-white">編輯個人資料</p>
+              <p className="text-xs text-slate-200/70">在此更新您的個人資訊。</p>
             </div>
             <button
               type="button"
               onClick={() => setForm({ name: session?.name || '', email: session?.email || '', password: '' })}
               className="text-xs font-semibold text-sky-200 hover:text-sky-100"
             >
-              Reset
+              重置
             </button>
           </div>
 
@@ -79,7 +79,7 @@ function ProfilePage() {
             {alert && <div className="col-span-full"><AlertBanner kind={alert.kind} message={alert.message} /></div>}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-100" htmlFor="name">
-                Name
+                名稱
               </label>
               <input
                 id="name"
@@ -90,7 +90,7 @@ function ProfilePage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-100" htmlFor="email">
-                Email
+                電子郵件
               </label>
               <input
                 id="email"
@@ -102,7 +102,7 @@ function ProfilePage() {
             </div>
             <div className="space-y-2 col-span-full sm:col-span-2">
               <label className="text-sm font-medium text-slate-100" htmlFor="password">
-                Password (optional)
+                密碼（選填）
               </label>
               <input
                 id="password"
@@ -110,7 +110,7 @@ function ProfilePage() {
                 value={form.password}
                 onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-emerald-400/50 focus:ring-emerald-500/40"
-                placeholder="Leave blank to keep current password"
+                placeholder="留空以保持當前密碼"
               />
             </div>
             <div className="col-span-full flex justify-end">
@@ -119,7 +119,7 @@ function ProfilePage() {
                 disabled={saving}
                 className="rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:from-emerald-400 hover:to-sky-400 disabled:opacity-70"
               >
-                {saving ? 'Saving…' : 'Save changes'}
+                {saving ? '儲存中…' : '儲存變更'}
               </button>
             </div>
           </form>

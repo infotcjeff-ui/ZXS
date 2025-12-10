@@ -9,9 +9,9 @@ const blankCompany = {
   address: '',
   phone: '',
   website: '',
-  description: '',
   notes: '',
   media: [],
+  relatedUserIds: [],
 }
 
 function CompanyFormPage() {
@@ -43,6 +43,11 @@ function CompanyFormPage() {
           ...blankCompany,
           ...data,
           media: Array.isArray(data.media) ? data.media : [],
+          relatedUserIds: Array.isArray(data.relatedUserIds) 
+            ? data.relatedUserIds 
+            : data.relatedUserId 
+              ? [data.relatedUserId] 
+              : (data.relatedUserIds ? [] : []),
         })
       }
       setLoading(false)
@@ -59,7 +64,12 @@ function CompanyFormPage() {
       setAlert({ kind: 'error', message: '公司名稱為必填' })
       return
     }
-    const selectedUser = users.find((u) => u.id === company.relatedUserId)
+    // Get first selected user as owner (or use existing owner)
+    const selectedUserIds = Array.isArray(company.relatedUserIds) ? company.relatedUserIds : []
+    const firstSelectedUser = selectedUserIds.length > 0 
+      ? users.find((u) => u.id === selectedUserIds[0])
+      : null
+    
     const payload = {
       name: company.name.trim(),
       address: company.address || '',
@@ -68,9 +78,10 @@ function CompanyFormPage() {
       description: company.description || '',
       notes: company.notes || '',
       media: Array.isArray(company.media) ? company.media : [],
-      ownerEmail: selectedUser?.email || company.ownerEmail || session?.email || 'unknown@zxsgit.local',
-      ownerName: selectedUser?.name || company.ownerName || session?.name || 'Unknown',
-      relatedUserId: company.relatedUserId || null,
+      ownerEmail: firstSelectedUser?.email || company.ownerEmail || session?.email || 'unknown@zxsgit.local',
+      ownerName: firstSelectedUser?.name || company.ownerName || session?.name || 'Unknown',
+      relatedUserIds: selectedUserIds,
+      relatedUserId: selectedUserIds.length > 0 ? selectedUserIds[0] : null, // Keep for backward compatibility
     }
     const result = company.id
       ? await updateCompany(company.id, payload)
@@ -161,7 +172,7 @@ function CompanyFormPage() {
           拖放圖片到此（保存為媒體 JSON）
           <p className="text-xs text-sky-200/80">接受任何圖片；儲存在瀏覽器。</p>
           <p className="mt-1 text-xs text-sky-200/80">
-            第一張自動設為主圖片，或在下方點「Set main」更換。
+            第一張自動設為主圖片，或在下方點「設為主圖」更換。
           </p>
         </div>
         <input
@@ -170,21 +181,51 @@ function CompanyFormPage() {
           onChange={(e) => setCompany((c) => ({ ...c, name: e.target.value }))}
           className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
         />
-        <div>
-          <label className="mb-2 block text-xs font-semibold text-slate-200/80">關聯用戶</label>
-          <select
-            value={company.relatedUserId || ''}
-            onChange={(e) => setCompany((c) => ({ ...c, relatedUserId: e.target.value || null }))}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sky-200 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
-          >
-            <option value="" className="bg-slate-900 text-slate-300">選擇用戶（可選）</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id} className="bg-slate-900 text-emerald-200">
-                {u.name} ({u.email}) {u.role === 'admin' ? '[管理員]' : ''}
-              </option>
-            ))}
-          </select>
-          <p className="mt-1 text-xs text-slate-400">選擇與此公司關聯的用戶</p>
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-xs font-semibold text-slate-200/80">關聯用戶（可多選）</label>
+          <div className="max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-3 scrollable-container">
+            {users.length === 0 ? (
+              <p className="text-sm text-slate-400">暫無用戶</p>
+            ) : (
+              <div className="space-y-2">
+                {users.map((u) => {
+                  const isSelected = Array.isArray(company.relatedUserIds) && company.relatedUserIds.includes(u.id)
+                  return (
+                    <label
+                      key={u.id}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const currentIds = Array.isArray(company.relatedUserIds) ? company.relatedUserIds : []
+                          if (e.target.checked) {
+                            setCompany((c) => ({ ...c, relatedUserIds: [...currentIds, u.id] }))
+                          } else {
+                            setCompany((c) => ({ ...c, relatedUserIds: currentIds.filter((id) => id !== u.id) }))
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-white">{u.name}</p>
+                        <p className="text-xs text-slate-300">{u.email}</p>
+                      </div>
+                      {u.role === 'admin' && (
+                        <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
+                          管理員
+                        </span>
+                      )}
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            已選擇 {Array.isArray(company.relatedUserIds) ? company.relatedUserIds.length : 0} 位用戶
+          </p>
         </div>
         <input
           placeholder="地址"
@@ -227,7 +268,7 @@ function CompanyFormPage() {
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-slate-950/60 px-2 py-1 text-[11px] text-white">
                   <span className="truncate">
                     {m.name}
-                    {m.isMain ? ' • Main image' : ''}
+                    {m.isMain ? ' • 主圖片' : ''}
                   </span>
                   <div className="flex items-center gap-2">
                     {!m.isMain && (
@@ -241,7 +282,7 @@ function CompanyFormPage() {
                         }
                         className="text-emerald-200 hover:text-emerald-100"
                       >
-                        Set main
+                        設為主圖
                       </button>
                     )}
                     <button
@@ -263,7 +304,7 @@ function CompanyFormPage() {
             type="submit"
             className="rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:from-emerald-400 hover:to-sky-400"
           >
-            {company.id ? 'Update company' : 'Create company'}
+            {company.id ? '更新公司' : '建立公司'}
           </button>
         </div>
       </form>

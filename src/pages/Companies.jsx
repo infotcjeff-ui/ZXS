@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider.jsx'
 
 function CompaniesPage() {
-  const { session, fetchCompanies, deleteCompany } = useAuth()
+  const { session, fetchCompanies, deleteCompany, fetchUsers } = useAuth()
   const [companies, setCompanies] = useState([])
+  const [users, setUsers] = useState([])
   const [view, setView] = useState('grid')
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState(null)
@@ -13,8 +14,10 @@ function CompaniesPage() {
     setLoading(true)
     const list = await fetchCompanies()
     setCompanies(list)
+    const userList = await fetchUsers()
+    setUsers(userList)
     setLoading(false)
-  }, [fetchCompanies])
+  }, [fetchCompanies, fetchUsers])
 
   useEffect(() => {
     loadCompanies()
@@ -87,6 +90,7 @@ function CompaniesPage() {
           <CompanyCard
             key={company.id}
             company={company}
+            users={users}
             canEdit={canEdit(company.ownerEmail)}
             canDelete={session?.role === 'admin'}
             onEditLink={`/companies/edit/${company.id}`}
@@ -107,9 +111,23 @@ function CompaniesPage() {
   )
 }
 
-function CompanyCard({ company, canEdit, canDelete, onEditLink, onDelete, deleting }) {
+function CompanyCard({ company, canEdit, canDelete, onEditLink, onDelete, deleting, users = [] }) {
   const mainMedia =
     company.media?.find((m) => m.isMain) || (company.media && company.media[0]) || null
+  
+  const getRelatedUsers = () => {
+    if (Array.isArray(company.relatedUserIds)) {
+      return users.filter(u => company.relatedUserIds.includes(u.email))
+    }
+    if (company.relatedUserId) {
+      const user = users.find(u => u.id === company.relatedUserId)
+      return user ? [user] : []
+    }
+    return []
+  }
+  
+  const relatedUsers = getRelatedUsers()
+  
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
       <div className="flex items-start justify-between gap-3">
@@ -123,9 +141,22 @@ function CompanyCard({ company, canEdit, canDelete, onEditLink, onDelete, deleti
               </div>
             )}
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-lg font-semibold text-white">{company.name}</p>
-            <p className="text-xs text-slate-300">{company.ownerName || company.ownerEmail}</p>
+            <p className="text-xs text-slate-300">擁有者：{company.ownerName || company.ownerEmail}</p>
+            {relatedUsers.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                <span className="text-xs text-slate-400">關聯用戶：</span>
+                {relatedUsers.map((u) => (
+                  <span
+                    key={u.id}
+                    className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-200"
+                  >
+                    {u.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </Link>
         <div className="flex items-center gap-2">
