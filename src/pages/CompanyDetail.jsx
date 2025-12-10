@@ -35,7 +35,11 @@ function CompanyDetailPage() {
           console.log('CompanyDetail: Loaded company data:', normalizedCompany)
           console.log('CompanyDetail: Media count:', normalizedCompany.media?.length || 0)
           console.log('CompanyDetail: Gallery count:', normalizedCompany.gallery?.length || 0)
-          setCompany(normalizedCompany)
+          console.log('CompanyDetail: Media sample:', normalizedCompany.media?.[0] ? { id: normalizedCompany.media[0].id, hasDataUrl: !!normalizedCompany.media[0].dataUrl } : 'none')
+          console.log('CompanyDetail: Gallery sample:', normalizedCompany.gallery?.[0] ? { id: normalizedCompany.gallery[0].id, hasDataUrl: !!normalizedCompany.gallery[0].dataUrl } : 'none')
+          
+          // Force re-render by creating a new object reference
+          setCompany({ ...normalizedCompany })
           setUsers(userList || [])
         } else if (active && !data) {
           console.error('CompanyDetail: Company not found for ID:', id)

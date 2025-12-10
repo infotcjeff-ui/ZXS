@@ -60,9 +60,27 @@ const loadCompanies = () => {
 
 const saveCompanies = (companies) => {
   try {
-    localStorage.setItem(COMPANIES_KEY, JSON.stringify(companies))
+    const jsonString = JSON.stringify(companies)
+    console.log('Saving companies to localStorage, total size:', (jsonString.length / 1024).toFixed(2), 'KB')
+    localStorage.setItem(COMPANIES_KEY, jsonString)
+    console.log('Companies saved successfully, count:', companies.length)
+    
+    // Verify the save
+    const saved = localStorage.getItem(COMPANIES_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      console.log('Verified: Saved companies count:', parsed.length)
+      if (companies.length > 0) {
+        const firstCompany = parsed[0]
+        console.log('First company media count:', firstCompany?.media?.length || 0)
+        console.log('First company gallery count:', firstCompany?.gallery?.length || 0)
+      }
+    }
   } catch (err) {
     console.error('Unable to save companies', err)
+    if (err.name === 'QuotaExceededError') {
+      console.error('localStorage quota exceeded! Image data may be too large.')
+    }
   }
 }
 

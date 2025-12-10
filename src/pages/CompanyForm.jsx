@@ -86,12 +86,20 @@ function CompanyFormPage() {
     }
 
     try {
+      console.log('Submitting company update with:')
+      console.log('- Media items:', payload.media?.length || 0)
+      console.log('- Gallery items:', payload.gallery?.length || 0)
+      console.log('- Media data:', payload.media)
+      console.log('- Gallery data:', payload.gallery)
+      
       const result = company.id
         ? updateCompany(company.id, payload)
         : createCompany(payload)
 
       console.log('Company save result:', result)
       console.log('Saved company:', result.company)
+      console.log('Saved company media:', result.company?.media)
+      console.log('Saved company gallery:', result.company?.gallery)
 
       if (!result.ok) {
         setAlert({ kind: 'error', message: result.message })
@@ -101,8 +109,13 @@ function CompanyFormPage() {
 
       setAlert({ kind: 'success', message: company.id ? '更新成功' : '建立成功' })
       
-      console.log('Company saved successfully, payload media:', payload.media?.length || 0)
-      console.log('Company saved successfully, payload gallery:', payload.gallery?.length || 0)
+      // Verify the save by reading back from localStorage
+      const savedCompanies = JSON.parse(localStorage.getItem('zxs-companies') || '[]')
+      const savedCompany = savedCompanies.find(c => c.id === (company.id || result.company?.id))
+      if (savedCompany) {
+        console.log('Verified saved company media count:', savedCompany.media?.length || 0)
+        console.log('Verified saved company gallery count:', savedCompany.gallery?.length || 0)
+      }
       
       // Dispatch event immediately
       window.dispatchEvent(new Event('companies:update'))
@@ -119,7 +132,7 @@ function CompanyFormPage() {
       }, 500)
     } catch (error) {
       console.error('Error saving company:', error)
-      setAlert({ kind: 'error', message: '儲存時發生錯誤' })
+      setAlert({ kind: 'error', message: '儲存時發生錯誤: ' + error.message })
       setSaving(false)
     }
   }
