@@ -39,17 +39,30 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason)
 })
 
-// Debug: Log that React is starting
+// Detect deployment environment and set base path
+const getBasePath = () => {
+  const hostname = window.location.hostname
+  // ServerAvatar or custom domain deployment (root path)
+  if (hostname.includes('tempavatar.xyz') || hostname.includes('serveravatar') || hostname !== 'infotcjeff-ui.github.io') {
+    return '/'
+  }
+  // GitHub Pages deployment (subpath)
+  return '/ZXS'
+}
+
+const basePath = getBasePath()
 console.log('React starting to render...')
 console.log('Root element:', rootElement)
 console.log('Current pathname:', window.location.pathname)
+console.log('Detected base path:', basePath)
+console.log('Hostname:', window.location.hostname)
 
 // Render with error boundaries
 try {
   createRoot(rootElement).render(
     <StrictMode>
       <ErrorBoundary>
-        <BrowserRouter basename="/ZXS">
+        <BrowserRouter basename={basePath}>
           <ErrorBoundary>
             <AuthProvider>
               <ErrorBoundary>

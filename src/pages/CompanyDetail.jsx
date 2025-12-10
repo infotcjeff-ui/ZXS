@@ -286,8 +286,8 @@ function CompanyDetailPage() {
               {formData.media?.length > 0 ? (
                 <div className="space-y-3">
                   {formData.media.map((m) => (
-                    <div key={m.id} className="relative overflow-hidden rounded-lg border border-white/10 bg-white/5">
-                      <img src={m.dataUrl} alt={m.name} className="h-32 w-full object-cover" />
+                    <div key={m.id} className="relative overflow-auto rounded-lg border border-white/10 bg-white/5 p-1 max-h-48">
+                      <img src={m.dataUrl} alt={m.name} className="w-full h-auto object-contain" />
                       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-slate-950/80 px-3 py-2 text-xs text-white">
                         <span className="truncate flex-1">
                           {m.isMain && <span className="text-emerald-300">主圖 • </span>}
@@ -327,11 +327,11 @@ function CompanyDetailPage() {
           ) : (
             <>
               {mainMedia?.dataUrl ? (
-                <div className="mb-4 aspect-video overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                <div className="mb-4 max-h-96 overflow-auto rounded-xl border border-white/10 bg-white/5 p-2">
                   <img
                     src={mainMedia.dataUrl}
                     alt={company.name}
-                    className="h-full w-full object-cover"
+                    className="w-full h-auto object-contain"
                   />
                 </div>
               ) : (
@@ -344,8 +344,8 @@ function CompanyDetailPage() {
                   <h3 className="mb-2 text-sm font-semibold text-white">其他圖片</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {otherMedia.map((m) => (
-                      <div key={m.id} className="aspect-video overflow-hidden rounded-lg border border-white/10 bg-white/5">
-                        <img src={m.dataUrl} alt={m.name} className="h-full w-full object-cover" />
+                      <div key={m.id} className="max-h-32 overflow-auto rounded-lg border border-white/10 bg-white/5 p-1">
+                        <img src={m.dataUrl} alt={m.name} className="w-full h-auto object-contain" />
                       </div>
                     ))}
                   </div>

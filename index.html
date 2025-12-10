@@ -43,12 +43,17 @@
           }
         });
       }
-      // Debug: Log current location
-      console.log('Current location:', window.location.href);
-      console.log('Base path should be:', '/ZXS/');
+      // Detect deployment environment
+      const hostname = window.location.hostname;
+      const isGitHubPages = hostname === 'infotcjeff-ui.github.io';
+      const basePath = isGitHubPages ? '/ZXS' : '/';
       
-      // Check if we're on the correct path
-      if (!window.location.pathname.startsWith('/ZXS/')) {
+      console.log('Current location:', window.location.href);
+      console.log('Hostname:', hostname);
+      console.log('Detected base path:', basePath);
+      
+      // Only redirect for GitHub Pages
+      if (isGitHubPages && !window.location.pathname.startsWith('/ZXS/')) {
         console.warn('Path mismatch! Redirecting...');
         window.location.replace('/ZXS/');
       }
