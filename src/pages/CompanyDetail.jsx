@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider.jsx'
 import AlertBanner from '../components/AlertBanner.jsx'
@@ -6,23 +6,28 @@ import AlertBanner from '../components/AlertBanner.jsx'
 function CompanyDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { session, getCompany, deleteCompany, updateCompany } = useAuth()
+  const { session, getCompany, deleteCompany, updateCompany, fetchUsers } = useAuth()
   const [company, setCompany] = useState(null)
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [alert, setAlert] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState(null)
   const [saving, setSaving] = useState(false)
+  const editFormRef = useRef(null)
+  const nameInputRef = useRef(null)
 
   useEffect(() => {
     let active = true
     const load = async () => {
       setLoading(true)
       const data = await getCompany(id)
+      const userList = await fetchUsers()
       if (active) {
         setCompany(data)
         setFormData(data)
+        setUsers(userList)
         setLoading(false)
       }
     }
@@ -30,7 +35,17 @@ function CompanyDetailPage() {
     return () => {
       active = false
     }
-  }, [id, getCompany])
+  }, [id, getCompany, fetchUsers])
+
+  useEffect(() => {
+    if (editing && formData) {
+      // Scroll to form and focus on name input
+      setTimeout(() => {
+        editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        nameInputRef.current?.focus()
+      }, 100)
+    }
+  }, [editing, formData])
 
   const handleDelete = async () => {
     if (!confirm(`確定要刪除公司 "${company.name}"？此操作無法復原。`)) return
@@ -173,7 +188,7 @@ function CompanyDetailPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div ref={editFormRef} className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">基本資訊</h2>
           {editing && formData ? (
@@ -181,6 +196,7 @@ function CompanyDetailPage() {
               <div>
                 <label className="text-xs text-slate-400">公司名稱 *</label>
                 <input
+                  ref={nameInputRef}
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
@@ -214,6 +230,54 @@ function CompanyDetailPage() {
             <p className="text-sm text-slate-200/80 whitespace-pre-wrap">{company.description || '—'}</p>
           )}
         </div>
+        {editing && formData && (
+          <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">關聯用戶（可多選）</h2>
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-3 scrollable-container">
+              {users.length === 0 ? (
+                <p className="text-sm text-slate-400">暫無用戶</p>
+              ) : (
+                <div className="space-y-2">
+                  {users.map((u) => {
+                    const isSelected = Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.includes(u.id)
+                    return (
+                      <label
+                        key={u.id}
+                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const currentIds = Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : []
+                            if (e.target.checked) {
+                              setFormData((c) => ({ ...c, relatedUserIds: [...currentIds, u.id] }))
+                            } else {
+                              setFormData((c) => ({ ...c, relatedUserIds: currentIds.filter((id) => id !== u.id) }))
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-white">{u.name}</p>
+                          <p className="text-xs text-slate-300">{u.email}</p>
+                        </div>
+                        {u.role === 'admin' && (
+                          <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
+                            管理員
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              已選擇 {Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds.length : 0} 位用戶
+            </p>
+          </div>
+        )}
       </div>
 
       {otherMedia.length > 0 && (

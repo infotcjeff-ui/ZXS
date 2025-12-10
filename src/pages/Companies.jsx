@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider.jsx'
 import AlertBanner from '../components/AlertBanner.jsx'
@@ -127,10 +127,17 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
   const [formData, setFormData] = useState(company)
   const [saving, setSaving] = useState(false)
   const [alert, setAlert] = useState(null)
+  const editFormRef = useRef(null)
+  const nameInputRef = useRef(null)
 
   useEffect(() => {
     if (isEditing) {
       setFormData(company)
+      // Scroll to form and focus on name input
+      setTimeout(() => {
+        editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        nameInputRef.current?.focus()
+      }, 100)
     }
   }, [isEditing, company])
 
@@ -177,16 +184,60 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
 
   if (isEditing) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
+      <div ref={editFormRef} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur">
         {alert && <AlertBanner kind={alert.kind} message={alert.message} />}
         <div className="space-y-3">
           <div>
             <label className="text-xs text-slate-400">公司名稱 *</label>
             <input
+              ref={nameInputRef}
               value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50"
             />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold text-slate-200/80">關聯用戶（可多選）</label>
+            <div className="max-h-32 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-2 scrollable-container">
+              {users.length === 0 ? (
+                <p className="text-xs text-slate-400">暫無用戶</p>
+              ) : (
+                <div className="space-y-1">
+                  {users.map((u) => {
+                    const isSelected = Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.includes(u.id)
+                    return (
+                      <label
+                        key={u.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs transition hover:bg-white/10"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const currentIds = Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : []
+                            if (e.target.checked) {
+                              setFormData((c) => ({ ...c, relatedUserIds: [...currentIds, u.id] }))
+                            } else {
+                              setFormData((c) => ({ ...c, relatedUserIds: currentIds.filter((id) => id !== u.id) }))
+                            }
+                          }}
+                          className="h-3 w-3 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
+                        />
+                        <span className="text-slate-200">{u.name}</span>
+                        {u.role === 'admin' && (
+                          <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] text-emerald-200">
+                            管理員
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-slate-400">
+              已選擇 {Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds.length : 0} 位用戶
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>

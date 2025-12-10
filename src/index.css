@@ -27,28 +27,28 @@ body::before {
   width: 100%;
   height: 100%;
   z-index: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 25%),
-    radial-gradient(circle at 80% 0%, rgba(236, 72, 153, 0.07), transparent 22%),
-    radial-gradient(circle at 50% 80%, rgba(52, 211, 153, 0.06), transparent 30%);
-  animation: gradientShift 20s ease infinite;
+  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(236, 72, 153, 0.12), transparent 30%),
+    radial-gradient(circle at 50% 80%, rgba(52, 211, 153, 0.12), transparent 35%);
+  animation: gradientShift 8s ease-in-out infinite;
   pointer-events: none;
 }
 
 @keyframes gradientShift {
   0%, 100% {
-    background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 25%),
-      radial-gradient(circle at 80% 0%, rgba(236, 72, 153, 0.07), transparent 22%),
-      radial-gradient(circle at 50% 80%, rgba(52, 211, 153, 0.06), transparent 30%);
+    background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 35%),
+      radial-gradient(circle at 80% 0%, rgba(236, 72, 153, 0.12), transparent 30%),
+      radial-gradient(circle at 50% 80%, rgba(52, 211, 153, 0.12), transparent 35%);
   }
   33% {
-    background: radial-gradient(circle at 40% 30%, rgba(59, 130, 246, 0.1), transparent 30%),
-      radial-gradient(circle at 60% 10%, rgba(236, 72, 153, 0.08), transparent 25%),
-      radial-gradient(circle at 30% 70%, rgba(52, 211, 153, 0.08), transparent 35%);
+    background: radial-gradient(circle at 50% 40%, rgba(59, 130, 246, 0.18), transparent 40%),
+      radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.15), transparent 35%),
+      radial-gradient(circle at 70% 60%, rgba(52, 211, 153, 0.15), transparent 40%);
   }
   66% {
-    background: radial-gradient(circle at 60% 40%, rgba(59, 130, 246, 0.09), transparent 28%),
-      radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.09), transparent 28%),
-      radial-gradient(circle at 70% 60%, rgba(52, 211, 153, 0.07), transparent 32%);
+    background: radial-gradient(circle at 70% 50%, rgba(59, 130, 246, 0.16), transparent 38%),
+      radial-gradient(circle at 40% 30%, rgba(236, 72, 153, 0.17), transparent 38%),
+      radial-gradient(circle at 30% 70%, rgba(52, 211, 153, 0.14), transparent 42%);
   }
 }
 
@@ -57,10 +57,10 @@ body::before {
     transform: translate(0, 0) scale(1);
   }
   33% {
-    transform: translate(30px, -30px) scale(1.1);
+    transform: translate(50px, -50px) scale(1.15);
   }
   66% {
-    transform: translate(-20px, 20px) scale(0.9);
+    transform: translate(-40px, 40px) scale(0.85);
   }
 }
 
