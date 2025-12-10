@@ -2,29 +2,32 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>ZXSGit - Redirecting...</title>
+    <title>ZXSGit</title>
     <script>
       // Single Page Apps for GitHub Pages
+      var pathSegmentsToKeep = 1;
       var l = window.location;
       var pathname = l.pathname;
       
-      // If already at /ZXS/, just redirect to index
-      if (pathname.startsWith('/ZXS/')) {
-        // Already correct path, redirect to index.html which will load the app
-        var redirectPath = '/ZXS/index.html' + l.search + l.hash;
-        l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + redirectPath);
-      } else if (pathname === '/ZXS' || pathname === '/ZXS/') {
-        // At base path, redirect to index
-        l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/ZXS/index.html' + l.search + l.hash);
-      } else {
-        // Not at /ZXS/, redirect to /ZXS/ with the path
-        var cleanPath = pathname;
-        if (cleanPath.startsWith('/')) {
-          cleanPath = cleanPath.substring(1);
-        }
-        var redirectPath = '/ZXS/' + (cleanPath || 'index.html') + l.search + l.hash;
-        l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + redirectPath);
+      // Remove double /ZXS if it occurs
+      if (pathname.startsWith('/ZXS/ZXS/')) {
+        pathname = '/ZXS/' + pathname.substring('/ZXS/ZXS/'.length);
+      } else if (pathname.startsWith('/ZXS/ZXS')) {
+        pathname = '/ZXS/' + pathname.substring('/ZXS/ZXS'.length);
       }
+      
+      // Ensure path starts with /ZXS/
+      if (!pathname.startsWith('/ZXS/')) {
+        if (pathname === '/' || pathname === '') {
+          pathname = '/ZXS/';
+        } else {
+          pathname = '/ZXS' + pathname;
+        }
+      }
+      
+      // Redirect to the correct path
+      var redirectPath = pathname + l.search + l.hash;
+      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + redirectPath);
     </script>
   </head>
   <body>
