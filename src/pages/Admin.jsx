@@ -39,12 +39,18 @@ function AdminPage() {
     const handleStorageChange = () => {
       load()
     }
+    const handleUsersUpdate = () => {
+      load()
+    }
     window.addEventListener('storage', handleStorageChange)
     // Also listen for custom event for same-tab updates
-    window.addEventListener('users:update', handleStorageChange)
+    window.addEventListener('users:update', handleUsersUpdate)
+    // Poll for updates every 2 seconds (in case backend is updated)
+    const interval = setInterval(load, 2000)
     return () => {
       window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('users:update', handleStorageChange)
+      window.removeEventListener('users:update', handleUsersUpdate)
+      clearInterval(interval)
     }
   }, [fetchUsers])
 

@@ -182,16 +182,48 @@ export function AuthProvider({ children }) {
   }
 
   const fetchUsers = useCallback(async () => {
+    let backendUsers = []
+    let localUsers = []
+    
+    // Try to fetch from backend
     try {
       const res = await fetch(`${API_BASE}/api/users`)
-      if (!res.ok) throw new Error('Failed to fetch users')
-      const data = await res.json()
-      return data.users ?? []
+      if (res.ok) {
+        const data = await res.json()
+        backendUsers = data.users ?? []
+      }
     } catch (err) {
-      console.error('Unable to fetch users, falling back to localStorage', err)
-      const users = loadUsers().map(({ password, ...rest }) => rest)
-      return users
+      console.error('Unable to fetch users from backend', err)
     }
+    
+    // Always load from localStorage as well
+    try {
+      localUsers = loadUsers().map(({ password, passwordHash, ...rest }) => rest)
+    } catch (err) {
+      console.error('Unable to load users from localStorage', err)
+    }
+    
+    // Merge users, prioritizing backend data but including localStorage users
+    const userMap = new Map()
+    
+    // Add backend users first
+    backendUsers.forEach(user => {
+      userMap.set(user.id, user)
+    })
+    
+    // Add localStorage users (if not already in map)
+    localUsers.forEach(user => {
+      if (!userMap.has(user.id)) {
+        userMap.set(user.id, user)
+      }
+    })
+    
+    // Convert map to array and sort by createdAt
+    return Array.from(userMap.values()).sort((a, b) => {
+      const aTime = a.createdAt || 0
+      const bTime = b.createdAt || 0
+      return aTime - bTime
+    })
   }, [])
 
   const deleteUser = useCallback(async (id) => {
