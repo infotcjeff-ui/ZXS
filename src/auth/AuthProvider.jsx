@@ -48,6 +48,25 @@ const saveTodos = (todos) => {
   }
 }
 
+const loadCompanies = () => {
+  try {
+    const raw = localStorage.getItem(COMPANIES_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch (err) {
+    console.error('Unable to load companies', err)
+    return []
+  }
+}
+
+const saveCompanies = (companies) => {
+  try {
+    localStorage.setItem(COMPANIES_KEY, JSON.stringify(companies))
+    console.log('Companies saved to localStorage:', companies.length)
+  } catch (err) {
+    console.error('Unable to save companies', err)
+  }
+}
+
 const ensureAdminUser = () => {
   const users = loadUsers()
   const hasAdmin = users.some((u) => u.email === 'admin@zxsgit.local')
@@ -331,30 +350,83 @@ export function AuthProvider({ children }) {
   const fetchTodos = useCallback(() => loadTodos(), [])
   const saveAllTodos = useCallback((todos) => saveTodos(todos), [])
   const fetchCompanies = useCallback(async () => {
+    let backendCompanies = []
+    // Try to fetch from backend
     try {
       const res = await fetch(`${API_BASE}/api/companies`)
-      if (!res.ok) throw new Error('Failed to fetch companies')
-      const data = await res.json()
-      return data.companies ?? []
+      if (res.ok) {
+        const data = await res.json()
+        backendCompanies = data.companies ?? []
+        // Save to localStorage for offline access
+        if (backendCompanies.length > 0) {
+          saveCompanies(backendCompanies)
+        }
+      }
     } catch (err) {
-      console.error('Unable to fetch companies', err)
-      return []
+      console.error('Unable to fetch companies from backend', err)
     }
+    
+    // Always load from localStorage as well
+    const localCompanies = loadCompanies()
+    
+    // Merge companies, prioritizing backend data
+    const companyMap = new Map()
+    
+    // Add backend companies first
+    backendCompanies.forEach(company => {
+      if (company && company.id) {
+        companyMap.set(company.id, company)
+      }
+    })
+    
+    // Add localStorage companies (if not already in map)
+    localCompanies.forEach(company => {
+      if (company && company.id && !companyMap.has(company.id)) {
+        companyMap.set(company.id, company)
+      }
+    })
+    
+    const mergedCompanies = Array.from(companyMap.values())
+    // Sort by updatedAt or createdAt (newest first)
+    mergedCompanies.sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
+    
+    return mergedCompanies
   }, [])
 
   const getCompany = useCallback(async (id) => {
+    // Try backend first
     try {
       const res = await fetch(`${API_BASE}/api/companies/${id}`)
-      if (!res.ok) return null
-      const data = await res.json()
-      return data.company ?? null
+      if (res.ok) {
+        const data = await res.json()
+        const company = data.company ?? null
+        if (company) {
+          // Update localStorage with this company
+          const companies = loadCompanies()
+          const index = companies.findIndex(c => c.id === id)
+          if (index >= 0) {
+            companies[index] = company
+          } else {
+            companies.push(company)
+          }
+          saveCompanies(companies)
+          return company
+        }
+      }
     } catch (err) {
-      console.error('Unable to load company', err)
-      return null
+      console.error('Unable to load company from backend', err)
     }
+    
+    // Fallback to localStorage
+    const companies = loadCompanies()
+    const company = companies.find(c => c.id === id)
+    return company || null
   }, [])
 
   const createCompany = useCallback(async (payload) => {
+    let createdCompany = null
+    
+    // Try backend first
     try {
       const res = await fetch(`${API_BASE}/api/companies`, {
         method: 'POST',
@@ -362,17 +434,38 @@ export function AuthProvider({ children }) {
         body: JSON.stringify(payload),
       })
       const data = await res.json()
-      if (!res.ok || !data.ok) {
-        return { ok: false, message: data.message || '無法建立公司' }
+      if (res.ok && data.ok && data.company) {
+        createdCompany = data.company
       }
-      return { ok: true, company: data.company }
     } catch (err) {
-      console.error('Unable to create company', err)
-      return { ok: false, message: '伺服器無法使用' }
+      console.error('Unable to create company in backend', err)
     }
+    
+    // Always save to localStorage (create if backend failed)
+    if (!createdCompany) {
+      createdCompany = {
+        id: crypto.randomUUID(),
+        ...payload,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
+    }
+    
+    // Save to localStorage
+    const companies = loadCompanies()
+    companies.push(createdCompany)
+    saveCompanies(companies)
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('companies:update'))
+    
+    return { ok: true, company: createdCompany }
   }, [])
 
   const updateCompany = useCallback(async (id, payload) => {
+    let updatedCompany = null
+    
+    // Try backend first
     try {
       const res = await fetch(`${API_BASE}/api/companies/${id}`, {
         method: 'PUT',
@@ -380,28 +473,79 @@ export function AuthProvider({ children }) {
         body: JSON.stringify(payload),
       })
       const data = await res.json()
-      if (!res.ok || !data.ok) {
-        return { ok: false, message: data.message || '無法更新公司' }
+      if (res.ok && data.ok && data.company) {
+        updatedCompany = data.company
       }
-      return { ok: true, company: data.company }
     } catch (err) {
-      console.error('Unable to update company', err)
-      return { ok: false, message: '伺服器無法使用' }
+      console.error('Unable to update company in backend', err)
     }
+    
+    // Always update localStorage
+    const companies = loadCompanies()
+    const index = companies.findIndex(c => c.id === id)
+    
+    if (index >= 0) {
+      // Update existing company
+      if (updatedCompany) {
+        companies[index] = updatedCompany
+      } else {
+        // Update from payload if backend failed
+        companies[index] = {
+          ...companies[index],
+          ...payload,
+          id: companies[index].id, // Preserve ID
+          updatedAt: Date.now(),
+        }
+        updatedCompany = companies[index]
+      }
+    } else {
+      // Create new if not found (shouldn't happen, but handle it)
+      if (updatedCompany) {
+        companies.push(updatedCompany)
+      } else {
+        const newCompany = {
+          id: id,
+          ...payload,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }
+        companies.push(newCompany)
+        updatedCompany = newCompany
+      }
+    }
+    
+    saveCompanies(companies)
+    console.log('Company updated in localStorage:', updatedCompany)
+    console.log('Updated company relatedUserIds:', updatedCompany.relatedUserIds)
+    console.log('Updated company gallery count:', updatedCompany.gallery?.length || 0)
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('companies:update'))
+    
+    return { ok: true, company: updatedCompany }
   }, [])
 
   const deleteCompany = useCallback(async (id) => {
+    // Try backend first
     try {
       const res = await fetch(`${API_BASE}/api/companies/${id}`, { method: 'DELETE' })
       const data = await res.json()
       if (!res.ok || !data.ok) {
-        return { ok: false, message: data.message || '無法刪除公司' }
+        // Continue to localStorage deletion even if backend fails
       }
-      return { ok: true, message: '公司已刪除' }
     } catch (err) {
-      console.error('Unable to delete company', err)
-      return { ok: false, message: '伺服器無法使用' }
+      console.error('Unable to delete company from backend', err)
     }
+    
+    // Always delete from localStorage
+    const companies = loadCompanies()
+    const filtered = companies.filter(c => c.id !== id)
+    saveCompanies(filtered)
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('companies:update'))
+    
+    return { ok: true, message: '公司已刪除' }
   }, [])
 
   const value = useMemo(
