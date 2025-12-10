@@ -150,47 +150,57 @@ function ProductsPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 lg:py-14">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200/70">
-            產品目錄
-          </p>
-          <h1 className="text-3xl font-semibold text-white">卡車產品</h1>
-          <p className="text-sm text-slate-200/80">
-            選擇適合您業務需求的貨車
-          </p>
+    <div className="flex h-screen w-full flex-col overflow-hidden">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 border-b border-white/5 bg-slate-950/60 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200/70">
+                產品目錄
+              </p>
+              <h1 className="text-3xl font-semibold text-white">卡車產品</h1>
+              <p className="text-sm text-slate-200/80">
+                選擇適合您業務需求的貨車
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                  selectedCategory === cat
+                    ? 'bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-lg'
+                    : 'bg-white/5 text-slate-200 hover:bg-white/10'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => setSelectedCategory(cat)}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-              selectedCategory === cat
-                ? 'bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-lg'
-                : 'bg-white/5 text-slate-200 hover:bg-white/10'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <p className="text-sm text-slate-200/70">載入產品中...</p>
-      ) : filteredProducts.length === 0 ? (
-        <p className="text-sm text-slate-200/70">此分類暫無產品</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} formatPrice={formatPrice} />
-          ))}
+      {/* Scrollable Content Area */}
+      <div className="scrollable-container flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-6xl px-4 py-6">
+          {loading ? (
+            <p className="text-sm text-slate-200/70">載入產品中...</p>
+          ) : filteredProducts.length === 0 ? (
+            <p className="text-sm text-slate-200/70">此分類暫無產品</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} formatPrice={formatPrice} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
