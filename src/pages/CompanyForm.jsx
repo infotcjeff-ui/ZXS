@@ -164,148 +164,180 @@ function CompanyFormPage() {
       {alert && <AlertBanner kind={alert.kind} message={alert.message} />}
       {loading && id && <p className="text-sm text-slate-200/80">載入公司資料中…</p>}
 
-      <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={handleSubmit}>
-        <div
-          ref={dropRef}
-          className="md:col-span-2 rounded-2xl border border-dashed border-sky-400/50 bg-sky-400/5 px-4 py-6 text-center text-sm text-sky-100"
-        >
-          拖放圖片到此（保存為媒體 JSON）
-          <p className="text-xs text-sky-200/80">接受任何圖片；儲存在瀏覽器。</p>
-          <p className="mt-1 text-xs text-sky-200/80">
-            第一張自動設為主圖片，或在下方點「設為主圖」更換。
-          </p>
-        </div>
-        <input
-          placeholder="公司名稱 *"
-          value={company.name}
-          onChange={(e) => setCompany((c) => ({ ...c, name: e.target.value }))}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
-        />
-        <div className="md:col-span-2">
-          <label className="mb-2 block text-xs font-semibold text-slate-200/80">關聯用戶（可多選）</label>
-          <div className="max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-3 scrollable-container">
-            {users.length === 0 ? (
-              <p className="text-sm text-slate-400">暫無用戶</p>
-            ) : (
-              <div className="space-y-2">
-                {users.map((u) => {
-                  const isSelected = Array.isArray(company.relatedUserIds) && company.relatedUserIds.includes(u.id)
-                  return (
-                    <label
-                      key={u.id}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          const currentIds = Array.isArray(company.relatedUserIds) ? company.relatedUserIds : []
-                          if (e.target.checked) {
-                            setCompany((c) => ({ ...c, relatedUserIds: [...currentIds, u.id] }))
-                          } else {
-                            setCompany((c) => ({ ...c, relatedUserIds: currentIds.filter((id) => id !== u.id) }))
-                          }
-                        }}
-                        className="h-4 w-4 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
-                      />
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-white">{u.name}</p>
-                        <p className="text-xs text-slate-300">{u.email}</p>
+      <form className="grid grid-cols-1 gap-6 lg:grid-cols-2" onSubmit={handleSubmit}>
+        {/* Left Column: Images */}
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">圖片管理</h2>
+            <div
+              ref={dropRef}
+              className="mb-4 rounded-xl border border-dashed border-sky-400/50 bg-sky-400/5 px-4 py-6 text-center text-sm text-sky-100"
+            >
+              拖放圖片到此
+              <p className="mt-1 text-xs text-sky-200/80">接受任何圖片；第一張自動設為主圖片</p>
+            </div>
+            {company.media?.length > 0 ? (
+              <div className="space-y-3">
+                {company.media.map((m) => (
+                  <div key={m.id} className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                    <img src={m.dataUrl} alt={m.name} className="h-32 w-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-slate-950/80 px-3 py-2 text-xs text-white">
+                      <span className="truncate flex-1">
+                        {m.name}
+                        {m.isMain && <span className="ml-2 text-emerald-300">• 主圖片</span>}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {!m.isMain && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCompany((c) => ({
+                                ...c,
+                                media: c.media.map((x) => ({ ...x, isMain: x.id === m.id })),
+                              }))
+                            }
+                            className="rounded px-2 py-1 text-[10px] font-semibold text-emerald-200 hover:bg-emerald-500/20"
+                          >
+                            設為主圖
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeMedia(m.id)}
+                          className="rounded px-2 py-1 text-[10px] font-semibold text-rose-200 hover:bg-rose-500/20"
+                        >
+                          刪除
+                        </button>
                       </div>
-                      {u.role === 'admin' && (
-                        <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
-                          管理員
-                        </span>
-                      )}
-                    </label>
-                  )
-                })}
+                    </div>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-4">暫無圖片</p>
             )}
           </div>
-          <p className="mt-2 text-xs text-slate-400">
-            已選擇 {Array.isArray(company.relatedUserIds) ? company.relatedUserIds.length : 0} 位用戶
-          </p>
         </div>
-        <input
-          placeholder="地址"
-          value={company.address}
-          onChange={(e) => setCompany((c) => ({ ...c, address: e.target.value }))}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
-        />
-        <input
-          placeholder="電話"
-          value={company.phone}
-          onChange={(e) => setCompany((c) => ({ ...c, phone: e.target.value }))}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
-        />
-        <input
-          placeholder="網站"
-          value={company.website}
-          onChange={(e) => setCompany((c) => ({ ...c, website: e.target.value }))}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
-        />
-        <textarea
-          placeholder="描述"
-          value={company.description}
-          onChange={(e) => setCompany((c) => ({ ...c, description: e.target.value }))}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40 md:col-span-2"
-          rows={3}
-        />
-        <textarea
-          placeholder="其他資訊"
-          value={company.notes || ''}
-          onChange={(e) => setCompany((c) => ({ ...c, notes: e.target.value }))}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40 md:col-span-2"
-          rows={2}
-        />
 
-        {company.media?.length > 0 && (
-          <div className="md:col-span-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {company.media.map((m) => (
-              <div key={m.id} className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                <img src={m.dataUrl} alt={m.name} className="h-24 w-full object-cover" />
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-slate-950/60 px-2 py-1 text-[11px] text-white">
-                  <span className="truncate">
-                    {m.name}
-                    {m.isMain ? ' • 主圖片' : ''}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {!m.isMain && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCompany((c) => ({
-                            ...c,
-                            media: c.media.map((x) => ({ ...x, isMain: x.id === m.id })),
-                          }))
-                        }
-                        className="text-emerald-200 hover:text-emerald-100"
-                      >
-                        設為主圖
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeMedia(m.id)}
-                      className="text-rose-200 hover:text-rose-100"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
+        {/* Right Column: Form Fields */}
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">基本資訊</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-200/80">公司名稱 *</label>
+                <input
+                  placeholder="公司名稱 *"
+                  value={company.name}
+                  onChange={(e) => setCompany((c) => ({ ...c, name: e.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
+                />
               </div>
-            ))}
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-200/80">地址</label>
+                <input
+                  placeholder="地址"
+                  value={company.address}
+                  onChange={(e) => setCompany((c) => ({ ...c, address: e.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-200/80">電話</label>
+                <input
+                  placeholder="電話"
+                  value={company.phone}
+                  onChange={(e) => setCompany((c) => ({ ...c, phone: e.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-200/80">網站</label>
+                <input
+                  placeholder="網站"
+                  value={company.website}
+                  onChange={(e) => setCompany((c) => ({ ...c, website: e.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-slate-200/80">備註</label>
+                <input
+                  placeholder="備註"
+                  value={company.notes || ''}
+                  onChange={(e) => setCompany((c) => ({ ...c, notes: e.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
+                />
+              </div>
+            </div>
           </div>
-        )}
 
-        <div className="md:col-span-2 flex justify-end">
-          <button
-            type="submit"
-            className="rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:from-emerald-400 hover:to-sky-400"
-          >
-            {company.id ? '更新公司' : '建立公司'}
-          </button>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">描述</h2>
+            <textarea
+              placeholder="描述"
+              value={company.description || ''}
+              onChange={(e) => setCompany((c) => ({ ...c, description: e.target.value }))}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 outline-none ring-2 ring-transparent transition focus:border-sky-400/50 focus:ring-sky-500/40"
+              rows={6}
+            />
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">關聯用戶（可多選）</h2>
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-3 scrollable-container">
+              {users.length === 0 ? (
+                <p className="text-sm text-slate-400">暫無用戶</p>
+              ) : (
+                <div className="space-y-2">
+                  {users.map((u) => {
+                    const isSelected = Array.isArray(company.relatedUserIds) && company.relatedUserIds.includes(u.id)
+                    return (
+                      <label
+                        key={u.id}
+                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const currentIds = Array.isArray(company.relatedUserIds) ? company.relatedUserIds : []
+                            if (e.target.checked) {
+                              setCompany((c) => ({ ...c, relatedUserIds: [...currentIds, u.id] }))
+                            } else {
+                              setCompany((c) => ({ ...c, relatedUserIds: currentIds.filter((id) => id !== u.id) }))
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-white">{u.name}</p>
+                          <p className="text-xs text-slate-300">{u.email}</p>
+                        </div>
+                        {u.role === 'admin' && (
+                          <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
+                            管理員
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              已選擇 {Array.isArray(company.relatedUserIds) ? company.relatedUserIds.length : 0} 位用戶
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:from-emerald-400 hover:to-sky-400"
+            >
+              {company.id ? '更新公司' : '建立公司'}
+            </button>
+          </div>
         </div>
       </form>
     </div>

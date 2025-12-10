@@ -17,18 +17,23 @@ import { useAuth } from './auth/AuthProvider.jsx'
 function NavBar() {
   const { isAuthenticated, session } = useAuth()
   const location = useLocation()
-  const isActive = (path) => location.pathname === path
 
-  const navLink = (path, label) => (
-    <Link
-      to={path}
-      className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
-        isActive(path) ? 'bg-white/15 text-white shadow-sm shadow-black/30' : 'text-slate-200/80'
-      } hover:text-white`}
-    >
-      {label}
-    </Link>
-  )
+  const navLink = (path, label) => {
+    // Check if current path matches or starts with the nav path
+    const isCurrentPath = location.pathname === path || 
+      (path !== '/' && location.pathname.startsWith(path)) ||
+      (path === '/companies' && (location.pathname.startsWith('/companies/new') || location.pathname.startsWith('/companies/edit')))
+    return (
+      <Link
+        to={path}
+        className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+          isCurrentPath ? 'bg-white/15 text-white shadow-sm shadow-black/30' : 'text-slate-200/80'
+        } hover:text-white`}
+      >
+        {label}
+      </Link>
+    )
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-slate-950/60 backdrop-blur">
