@@ -101,12 +101,21 @@ function CompanyFormPage() {
 
       setAlert({ kind: 'success', message: company.id ? '更新成功' : '建立成功' })
       
+      console.log('Company saved successfully, payload media:', payload.media?.length || 0)
+      console.log('Company saved successfully, payload gallery:', payload.gallery?.length || 0)
+      
       // Dispatch event immediately
       window.dispatchEvent(new Event('companies:update'))
       
       // Force a small delay to ensure localStorage is updated
       setTimeout(() => {
-        navigate('/companies')
+        if (company.id) {
+          // If editing, navigate to detail page to see updates
+          navigate(`/companies/${company.id}`)
+        } else {
+          // If creating, navigate to list
+          navigate('/companies')
+        }
       }, 500)
     } catch (error) {
       console.error('Error saving company:', error)

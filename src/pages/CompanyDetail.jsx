@@ -19,10 +19,8 @@ function CompanyDetailPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const [data, userList] = await Promise.all([
-          getCompany(id),
-          fetchUsers()
-        ])
+        const data = getCompany(id)
+        const userList = await fetchUsers()
         if (active && data) {
           const normalizedCompany = {
             ...data,
@@ -34,8 +32,14 @@ function CompanyDetailPage() {
                 ? [data.relatedUserId]
                 : [],
           }
+          console.log('CompanyDetail: Loaded company data:', normalizedCompany)
+          console.log('CompanyDetail: Media count:', normalizedCompany.media?.length || 0)
+          console.log('CompanyDetail: Gallery count:', normalizedCompany.gallery?.length || 0)
           setCompany(normalizedCompany)
           setUsers(userList || [])
+        } else if (active && !data) {
+          console.error('CompanyDetail: Company not found for ID:', id)
+          setAlert({ kind: 'error', message: '找不到公司資料' })
         }
       } catch (error) {
         console.error('Error loading company data:', error)
@@ -48,10 +52,18 @@ function CompanyDetailPage() {
     }
     load()
 
-    const handleUpdate = () => load()
+    const handleUpdate = () => {
+      console.log('CompanyDetail: Update event received, reloading...')
+      if (active) {
+        load()
+      }
+    }
     const handleStorage = (e) => {
       if (e.key === 'zxs-companies' || !e.key) {
-        load()
+        console.log('CompanyDetail: Storage event received, reloading...')
+        if (active) {
+          load()
+        }
       }
     }
     window.addEventListener('companies:update', handleUpdate)

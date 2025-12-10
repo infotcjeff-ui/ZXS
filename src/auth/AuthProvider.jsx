@@ -393,23 +393,45 @@ export function AuthProvider({ children }) {
   }, [])
 
   const updateCompany = useCallback((id, payload) => {
-    const companies = loadCompanies()
-    const index = companies.findIndex(c => c.id === id)
-    if (index < 0) {
-      return { ok: false, message: '公司不存在' }
+    try {
+      const companies = loadCompanies()
+      const index = companies.findIndex(c => c.id === id)
+      if (index < 0) {
+        return { ok: false, message: '公司不存在' }
+      }
+      
+      // Always update media and gallery from payload if provided
+      const updatedCompany = {
+        ...companies[index],
+        ...payload,
+        id: companies[index].id, // Preserve ID
+        media: Array.isArray(payload.media) ? payload.media : (payload.media === undefined ? companies[index].media || [] : []),
+        gallery: Array.isArray(payload.gallery) ? payload.gallery : (payload.gallery === undefined ? companies[index].gallery || [] : []),
+        relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
+        updatedAt: Date.now(),
+      }
+      
+      companies[index] = updatedCompany
+      saveCompanies(companies)
+      
+      console.log('Company updated in localStorage:', updatedCompany)
+      console.log('Updated media count:', updatedCompany.media?.length || 0)
+      console.log('Updated gallery count:', updatedCompany.gallery?.length || 0)
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new Event('companies:update'))
+      
+      // Also trigger a custom storage event for same-tab updates
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'zxs-companies',
+        newValue: JSON.stringify(companies)
+      }))
+      
+      return { ok: true, company: updatedCompany }
+    } catch (error) {
+      console.error('Error updating company:', error)
+      return { ok: false, message: '更新公司時發生錯誤' }
     }
-    companies[index] = {
-      ...companies[index],
-      ...payload,
-      id: companies[index].id,
-      media: Array.isArray(payload.media) ? payload.media : companies[index].media || [],
-      gallery: Array.isArray(payload.gallery) ? payload.gallery : companies[index].gallery || [],
-      relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
-      updatedAt: Date.now(),
-    }
-    saveCompanies(companies)
-    window.dispatchEvent(new Event('companies:update'))
-    return { ok: true, company: companies[index] }
   }, [])
 
   const deleteCompany = useCallback((id) => {
