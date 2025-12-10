@@ -108,6 +108,7 @@ function CompanyFormPage() {
       }
 
       setAlert({ kind: 'success', message: company.id ? '更新成功' : '建立成功' })
+      setSaving(false) // Reset saving state
       
       // Verify the save by reading back from localStorage
       const savedCompanies = JSON.parse(localStorage.getItem('zxs-companies') || '[]')
@@ -115,12 +116,17 @@ function CompanyFormPage() {
       if (savedCompany) {
         console.log('Verified saved company media count:', savedCompany.media?.length || 0)
         console.log('Verified saved company gallery count:', savedCompany.gallery?.length || 0)
+      } else {
+        console.error('Company not found in localStorage after save!')
+        setAlert({ kind: 'error', message: '儲存成功但無法驗證，請重新整理頁面檢查' })
+        setSaving(false)
+        return
       }
       
       // Dispatch event immediately
       window.dispatchEvent(new Event('companies:update'))
       
-      // Force a small delay to ensure localStorage is updated
+      // Force a small delay to ensure localStorage is updated and event listeners process
       setTimeout(() => {
         if (company.id) {
           // If editing, navigate to detail page to see updates
@@ -129,7 +135,7 @@ function CompanyFormPage() {
           // If creating, navigate to list
           navigate('/companies')
         }
-      }, 500)
+      }, 300)
     } catch (error) {
       console.error('Error saving company:', error)
       setAlert({ kind: 'error', message: '儲存時發生錯誤: ' + error.message })

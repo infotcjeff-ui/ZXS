@@ -61,26 +61,45 @@ const loadCompanies = () => {
 const saveCompanies = (companies) => {
   try {
     const jsonString = JSON.stringify(companies)
-    console.log('Saving companies to localStorage, total size:', (jsonString.length / 1024).toFixed(2), 'KB')
+    const sizeKB = (jsonString.length / 1024).toFixed(2)
+    console.log('Saving companies to localStorage, total size:', sizeKB, 'KB')
+    
+    // Check localStorage quota (typically 5-10MB)
+    if (jsonString.length > 5 * 1024 * 1024) {
+      console.warn('Warning: Companies data is very large (' + sizeKB + ' KB), may exceed localStorage quota')
+    }
+    
     localStorage.setItem(COMPANIES_KEY, jsonString)
     console.log('Companies saved successfully, count:', companies.length)
     
     // Verify the save
     const saved = localStorage.getItem(COMPANIES_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      console.log('Verified: Saved companies count:', parsed.length)
-      if (companies.length > 0) {
-        const firstCompany = parsed[0]
-        console.log('First company media count:', firstCompany?.media?.length || 0)
-        console.log('First company gallery count:', firstCompany?.gallery?.length || 0)
-      }
+    if (!saved) {
+      throw new Error('Failed to save companies: localStorage.getItem returned null')
+    }
+    
+    const parsed = JSON.parse(saved)
+    if (parsed.length !== companies.length) {
+      throw new Error(`Save verification failed: expected ${companies.length} companies, got ${parsed.length}`)
+    }
+    
+    console.log('Verified: Saved companies count:', parsed.length)
+    if (companies.length > 0) {
+      const lastCompany = parsed[parsed.length - 1]
+      console.log('Last company:', {
+        id: lastCompany?.id,
+        name: lastCompany?.name,
+        mediaCount: lastCompany?.media?.length || 0,
+        galleryCount: lastCompany?.gallery?.length || 0
+      })
     }
   } catch (err) {
     console.error('Unable to save companies', err)
     if (err.name === 'QuotaExceededError') {
       console.error('localStorage quota exceeded! Image data may be too large.')
+      throw new Error('儲存空間不足，請減少圖片數量或大小')
     }
+    throw err
   }
 }
 
@@ -379,20 +398,50 @@ export function AuthProvider({ children }) {
 
   const createCompany = useCallback((payload) => {
     try {
+      console.log('createCompany: Starting with payload:', {
+        name: payload.name,
+        mediaCount: payload.media?.length || 0,
+        galleryCount: payload.gallery?.length || 0,
+        relatedUserIdsCount: payload.relatedUserIds?.length || 0
+      })
+      
       const companies = loadCompanies()
       const newCompany = {
         id: crypto.randomUUID(),
-        ...payload,
+        name: payload.name || '',
+        address: payload.address || '',
+        description: payload.description || '',
+        phone: payload.phone || '',
+        website: payload.website || '',
+        notes: payload.notes || '',
         media: Array.isArray(payload.media) ? payload.media : [],
         gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
         relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
+        ownerEmail: payload.ownerEmail || 'unknown@zxsgit.local',
+        ownerName: payload.ownerName || 'Unknown',
         createdAt: Date.now(),
         updatedAt: Date.now(),
       }
+      
+      console.log('createCompany: New company object:', {
+        id: newCompany.id,
+        name: newCompany.name,
+        mediaCount: newCompany.media.length,
+        galleryCount: newCompany.gallery.length
+      })
+      
       companies.push(newCompany)
       saveCompanies(companies)
-      console.log('Company created and saved to localStorage:', newCompany)
-      console.log('Total companies now:', companies.length)
+      
+      // Verify the save
+      const savedCompanies = loadCompanies()
+      const savedCompany = savedCompanies.find(c => c.id === newCompany.id)
+      if (!savedCompany) {
+        console.error('createCompany: Company was not saved!')
+        return { ok: false, message: '建立公司失敗：無法保存到 localStorage' }
+      }
+      
+      console.log('createCompany: Company created and verified, total companies:', savedCompanies.length)
       
       // Dispatch event to notify other components
       window.dispatchEvent(new Event('companies:update'))
@@ -406,7 +455,7 @@ export function AuthProvider({ children }) {
       return { ok: true, company: newCompany }
     } catch (error) {
       console.error('Error creating company:', error)
-      return { ok: false, message: '建立公司時發生錯誤' }
+      return { ok: false, message: '建立公司時發生錯誤: ' + (error.message || '未知錯誤') }
     }
   }, [])
 
