@@ -33,8 +33,17 @@ function CompaniesPage() {
   useEffect(() => {
     loadCompanies()
     const handleUpdate = () => loadCompanies()
+    const handleStorage = (e) => {
+      if (e.key === 'zxs-companies' || !e.key) {
+        loadCompanies()
+      }
+    }
     window.addEventListener('companies:update', handleUpdate)
-    return () => window.removeEventListener('companies:update', handleUpdate)
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener('companies:update', handleUpdate)
+      window.removeEventListener('storage', handleStorage)
+    }
   }, [loadCompanies])
 
   const canEdit = (ownerEmail) =>

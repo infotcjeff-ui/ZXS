@@ -73,8 +73,21 @@ function CompanyDetailPage() {
       }
     }
     load()
+    
+    // Listen for storage and update events
+    const handleUpdate = () => load()
+    const handleStorage = (e) => {
+      if (e.key === 'zxs-companies' || !e.key) {
+        load()
+      }
+    }
+    window.addEventListener('companies:update', handleUpdate)
+    window.addEventListener('storage', handleStorage)
+    
     return () => {
       active = false
+      window.removeEventListener('companies:update', handleUpdate)
+      window.removeEventListener('storage', handleStorage)
     }
   }, [id, getCompany, fetchUsers])
 
