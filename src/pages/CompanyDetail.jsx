@@ -17,6 +17,7 @@ function CompanyDetailPage() {
   const [saving, setSaving] = useState(false)
   const editFormRef = useRef(null)
   const nameInputRef = useRef(null)
+  const dropRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -47,6 +48,53 @@ function CompanyDetailPage() {
     }
   }, [editing, formData])
 
+  const onDropFiles = (files) => {
+    const list = Array.from(files)
+    if (!list.length) return
+    const readers = list.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () =>
+            resolve({ id: crypto.randomUUID(), name: file.name, dataUrl: reader.result, isMain: false })
+          reader.readAsDataURL(file)
+        }),
+    )
+    Promise.all(readers).then((media) => {
+      setFormData((c) => {
+        const existing = c.media || []
+        const next =
+          existing.length === 0 && media.length
+            ? media.map((m, idx) => ({ ...m, isMain: idx === 0 }))
+            : media
+        return { ...c, media: [...existing, ...next] }
+      })
+    })
+  }
+
+  useEffect(() => {
+    if (!editing) return
+    const el = dropRef.current
+    if (!el) return
+    const prevent = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    const handleDrop = (e) => {
+      prevent(e)
+      onDropFiles(e.dataTransfer.files)
+    }
+    el.addEventListener('dragover', prevent)
+    el.addEventListener('drop', handleDrop)
+    return () => {
+      el.removeEventListener('dragover', prevent)
+      el.removeEventListener('drop', handleDrop)
+    }
+  }, [editing])
+
+  const removeMedia = (mid) =>
+    setFormData((c) => ({ ...c, media: (c.media || []).filter((m) => m.id !== mid) }))
+
   const handleDelete = async () => {
     if (!confirm(`確定要刪除公司 "${company.name}"？此操作無法復原。`)) return
     setDeleting(true)
@@ -61,37 +109,49 @@ function CompanyDetailPage() {
   }
 
   const handleSave = async () => {
-    if (!formData.name?.trim()) {
+    if (!formData?.name?.trim()) {
       setAlert({ kind: 'error', message: '公司名稱為必填' })
       return
     }
     setSaving(true)
     setAlert(null)
-    const res = await updateCompany(id, {
-      name: formData.name.trim(),
-      address: formData.address || '',
-      phone: formData.phone || '',
-      website: formData.website || '',
-      description: formData.description || '',
-      notes: formData.notes || '',
-      media: Array.isArray(formData.media) ? formData.media : [],
-      ownerEmail: formData.ownerEmail || company.ownerEmail,
-      ownerName: formData.ownerName || company.ownerName,
-      relatedUserIds: Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : [],
-      relatedUserId: Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.length > 0 ? formData.relatedUserIds[0] : null,
-    })
-    setSaving(false)
-    if (!res.ok) {
-      setAlert({ kind: 'error', message: res.message || '更新失敗' })
-      return
+    try {
+      const res = await updateCompany(id, {
+        name: formData.name.trim(),
+        address: formData.address || '',
+        phone: formData.phone || '',
+        website: formData.website || '',
+        description: formData.description || '',
+        notes: formData.notes || '',
+        media: Array.isArray(formData.media) ? formData.media : [],
+        ownerEmail: formData.ownerEmail || company.ownerEmail,
+        ownerName: formData.ownerName || company.ownerName,
+        relatedUserIds: Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : [],
+        relatedUserId: Array.isArray(formData.relatedUserIds) && formData.relatedUserIds.length > 0 ? formData.relatedUserIds[0] : null,
+      })
+      if (!res.ok) {
+        setAlert({ kind: 'error', message: res.message || '更新失敗' })
+        setSaving(false)
+        return
+      }
+      setAlert({ kind: 'success', message: '更新成功' })
+      // Reload company data
+      const updated = await getCompany(id)
+      if (updated) {
+        setCompany(updated)
+        setFormData(updated)
+      }
+      window.dispatchEvent(new Event('companies:update'))
+      setTimeout(() => {
+        setAlert(null)
+        setEditing(false) // Close edit mode after successful save
+      }, 1500)
+    } catch (error) {
+      console.error('Save error:', error)
+      setAlert({ kind: 'error', message: '更新時發生錯誤' })
+    } finally {
+      setSaving(false)
     }
-    setAlert({ kind: 'success', message: '更新成功' })
-    setEditing(false)
-    const updated = await getCompany(id)
-    setCompany(updated)
-    setFormData(updated)
-    window.dispatchEvent(new Event('companies:update'))
-    setTimeout(() => setAlert(null), 2000)
   }
 
   if (loading) {
