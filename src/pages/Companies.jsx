@@ -14,11 +14,20 @@ function CompaniesPage() {
 
   const loadCompanies = useCallback(async () => {
     setLoading(true)
-    const list = await fetchCompanies()
-    setCompanies(list)
-    const userList = await fetchUsers()
-    setUsers(userList)
-    setLoading(false)
+    try {
+      const [list, userList] = await Promise.all([
+        fetchCompanies(),
+        fetchUsers()
+      ])
+      setCompanies(list || [])
+      setUsers(userList || [])
+    } catch (error) {
+      console.error('Error loading companies:', error)
+      setCompanies([])
+      setUsers([])
+    } finally {
+      setLoading(false)
+    }
   }, [fetchCompanies, fetchUsers])
 
   useEffect(() => {
@@ -203,11 +212,12 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
   const galleryCount = company.gallery?.length || 0
   
   const getRelatedUsers = () => {
-    if (Array.isArray(company.relatedUserIds)) {
-      return users.filter(u => company.relatedUserIds.includes(u.id))
+    if (!users || users.length === 0) return []
+    if (Array.isArray(company.relatedUserIds) && company.relatedUserIds.length > 0) {
+      return users.filter(u => u && u.id && company.relatedUserIds.includes(u.id))
     }
     if (company.relatedUserId) {
-      const user = users.find(u => u.id === company.relatedUserId)
+      const user = users.find(u => u && u.id === company.relatedUserId)
       return user ? [user] : []
     }
     return []

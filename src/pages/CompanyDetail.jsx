@@ -439,80 +439,79 @@ function CompanyDetailPage() {
                 </div>
               )}
               
-              {/* Gallery Display */}
+              {/* Gallery Display - Match Image 1 style */}
               {company.gallery && company.gallery.length > 0 && (
                 <div className="mb-4">
                   <h3 className="mb-3 text-sm font-semibold text-white">圖庫</h3>
-                  {/* Main Gallery Image Display */}
+                  {/* Main Gallery Image Display - Large view */}
                   <div className="mb-3 rounded-xl border border-white/10 bg-white/5 p-2">
-                    <div className="max-h-96 overflow-auto">
+                    <div className="aspect-video overflow-hidden rounded-lg">
                       <img
                         src={company.gallery[selectedGalleryIndex]?.dataUrl}
                         alt={`Gallery ${selectedGalleryIndex + 1}`}
-                        className="w-full h-auto object-contain"
+                        className="h-full w-full object-contain"
                       />
                     </div>
                   </div>
                   
-                  {/* Gallery Thumbnail Grid (4 images with arrows) */}
-                  {company.gallery.length > 1 && (
+                  {/* Gallery Thumbnail Grid (4 images with arrows) - Match Image 1 style */}
+                  {company.gallery.length > 0 && (
                     <div className="relative">
                       <div className="flex items-center gap-2">
-                        {/* Left Arrow */}
-                        {selectedGalleryIndex > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedGalleryIndex(Math.max(0, selectedGalleryIndex - 1))}
-                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
-                          >
-                            ←
-                          </button>
-                        )}
-                        {selectedGalleryIndex === 0 && <div className="w-10" />}
+                        {/* Left Arrow - Always show if not at start */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newIndex = selectedGalleryIndex > 0 ? selectedGalleryIndex - 1 : company.gallery.length - 1
+                            setSelectedGalleryIndex(newIndex)
+                          }}
+                          className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+                        >
+                          ←
+                        </button>
                         
-                        {/* Thumbnail Grid (4 images, showing current viewport) */}
+                        {/* Thumbnail Grid (Always show 4 images, wrap around) */}
                         <div className="flex-1 grid grid-cols-4 gap-2">
-                          {(() => {
-                            // Calculate which 4 images to show
-                            const startIdx = Math.max(0, Math.min(selectedGalleryIndex - 1, company.gallery.length - 4))
-                            const endIdx = Math.min(startIdx + 4, company.gallery.length)
-                            return company.gallery.slice(startIdx, endIdx).map((g, idx) => {
-                              const actualIdx = startIdx + idx
-                              return (
-                                <button
-                                  key={g.id}
-                                  type="button"
-                                  onClick={() => setSelectedGalleryIndex(actualIdx)}
-                                  className={`rounded-lg border-2 overflow-hidden transition ${
-                                    selectedGalleryIndex === actualIdx
-                                      ? 'border-sky-400 bg-sky-400/20'
-                                      : 'border-white/10 bg-white/5 hover:border-white/20'
-                                  }`}
-                                >
-                                  <div className="aspect-square overflow-hidden">
-                                    <img
-                                      src={g.dataUrl}
-                                      alt={`Thumbnail ${actualIdx + 1}`}
-                                      className="h-full w-full object-cover"
-                                    />
-                                  </div>
-                                </button>
-                              )
-                            })
-                          })()}
+                          {Array.from({ length: 4 }).map((_, idx) => {
+                            // Calculate which image to show (wrap around)
+                            const galleryIndex = (selectedGalleryIndex - 1 + idx + company.gallery.length) % company.gallery.length
+                            const g = company.gallery[galleryIndex]
+                            const isSelected = galleryIndex === selectedGalleryIndex
+                            
+                            return (
+                              <button
+                                key={`${g.id}-${idx}`}
+                                type="button"
+                                onClick={() => setSelectedGalleryIndex(galleryIndex)}
+                                className={`rounded-lg border-2 overflow-hidden transition ${
+                                  isSelected
+                                    ? 'border-sky-400 bg-sky-400/20'
+                                    : 'border-white/10 bg-white/5 hover:border-white/20'
+                                }`}
+                              >
+                                <div className="aspect-square overflow-hidden">
+                                  <img
+                                    src={g.dataUrl}
+                                    alt={`Thumbnail ${galleryIndex + 1}`}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                              </button>
+                            )
+                          })}
                         </div>
                         
-                        {/* Right Arrow */}
-                        {selectedGalleryIndex < company.gallery.length - 1 && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedGalleryIndex(Math.min(company.gallery.length - 1, selectedGalleryIndex + 1))}
-                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20"
-                          >
-                            →
-                          </button>
-                        )}
-                        {selectedGalleryIndex >= company.gallery.length - 1 && <div className="w-10" />}
+                        {/* Right Arrow - Always show */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newIndex = selectedGalleryIndex < company.gallery.length - 1 ? selectedGalleryIndex + 1 : 0
+                            setSelectedGalleryIndex(newIndex)
+                          }}
+                          className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+                        >
+                          →
+                        </button>
                       </div>
                       {/* Gallery Counter */}
                       <p className="mt-2 text-center text-xs text-slate-400">
