@@ -11,7 +11,6 @@ import CompanyDetailPage from './pages/CompanyDetail.jsx'
 import PostGeneratorPage from './pages/PostGenerator.jsx'
 import ProductsPage from './pages/Products.jsx'
 import ProductDetailPage from './pages/ProductDetail.jsx'
-import OnePageScroll from './pages/OnePageScroll.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './auth/AuthProvider.jsx'
 
@@ -20,44 +19,16 @@ function NavBar() {
   const location = useLocation()
   const isActive = (path) => location.pathname === path
 
-  const scrollToSection = (sectionId) => {
-    if (isAuthenticated && location.pathname === '/') {
-      const element = document.getElementById(sectionId)
-      if (element) {
-        const offset = 80
-        const elementPosition = element.offsetTop
-        const offsetPosition = elementPosition - offset
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        })
-      }
-    }
-  }
-
-  const navLink = (path, label, sectionId = null) => {
-    if (sectionId && isAuthenticated && location.pathname === '/') {
-      return (
-        <button
-          type="button"
-          onClick={() => scrollToSection(sectionId)}
-          className="rounded-xl px-3 py-2 text-sm font-semibold transition text-slate-200/80 hover:text-white"
-        >
-          {label}
-        </button>
-      )
-    }
-    return (
-      <Link
-        to={path}
-        className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
-          isActive(path) ? 'bg-white/15 text-white shadow-sm shadow-black/30' : 'text-slate-200/80'
-        } hover:text-white`}
-      >
-        {label}
-      </Link>
-    )
-  }
+  const navLink = (path, label) => (
+    <Link
+      to={path}
+      className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+        isActive(path) ? 'bg-white/15 text-white shadow-sm shadow-black/30' : 'text-slate-200/80'
+      } hover:text-white`}
+    >
+      {label}
+    </Link>
+  )
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-slate-950/60 backdrop-blur">
@@ -74,13 +45,13 @@ function NavBar() {
         <nav className="flex items-center gap-2">
           {!isAuthenticated && navLink('/login', '登入')}
           {!isAuthenticated && navLink('/register', '註冊')}
-          {isAuthenticated && navLink('/', '主控台', 'dashboard')}
-          {isAuthenticated && navLink('/', '公司', 'companies')}
-          {isAuthenticated && navLink('/', '產品', 'products')}
-          {isAuthenticated && navLink('/', '待辦清單', 'todos')}
-          {isAuthenticated && navLink('/', '貼文產生', 'posts')}
-          {isAuthenticated && navLink('/', '個人資料', 'profile')}
-          {session?.role === 'admin' && navLink('/', '管理', 'admin')}
+          {isAuthenticated && navLink('/', '主控台')}
+          {isAuthenticated && navLink('/companies', '公司')}
+          {isAuthenticated && navLink('/products', '產品')}
+          {isAuthenticated && navLink('/todos', '待辦清單')}
+          {isAuthenticated && navLink('/posts', '貼文產生')}
+          {isAuthenticated && navLink('/profile', '個人資料')}
+          {session?.role === 'admin' && navLink('/admin', '管理')}
         </nav>
       </div>
     </header>
@@ -104,7 +75,7 @@ function AppShell() {
               path="/"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'member']}>
-                  <OnePageScroll />
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />

@@ -35,8 +35,3 @@ body {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
