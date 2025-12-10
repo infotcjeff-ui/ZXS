@@ -9,6 +9,8 @@ import CompaniesPage from './pages/Companies.jsx'
 import CompanyFormPage from './pages/CompanyForm.jsx'
 import CompanyDetailPage from './pages/CompanyDetail.jsx'
 import PostGeneratorPage from './pages/PostGenerator.jsx'
+import ProductsPage from './pages/Products.jsx'
+import ProductDetailPage from './pages/ProductDetail.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './auth/AuthProvider.jsx'
 
@@ -45,6 +47,7 @@ function NavBar() {
           {!isAuthenticated && navLink('/register', '註冊')}
           {isAuthenticated && navLink('/', '主控台')}
           {isAuthenticated && navLink('/companies', '公司')}
+          {isAuthenticated && navLink('/products', '產品')}
           {isAuthenticated && navLink('/todos', '待辦清單')}
           {isAuthenticated && navLink('/posts', '貼文產生')}
           {isAuthenticated && navLink('/profile', '個人資料')}
@@ -123,6 +126,22 @@ function AppShell() {
               element={
                 <ProtectedRoute allowedRoles={['admin', 'member']}>
                   <CompanyDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/products"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'member']}>
+                  <ProductsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/products/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'member']}>
+                  <ProductDetailPage />
                 </ProtectedRoute>
               }
             />
