@@ -30,8 +30,8 @@ function CompanyDetailPage() {
           fetchUsers()
         ])
         if (active && data) {
-          setCompany(data)
-          setFormData({
+          // Normalize company data to ensure consistency
+          const normalizedCompany = {
             ...data,
             media: Array.isArray(data.media) ? data.media : [],
             gallery: Array.isArray(data.gallery) ? data.gallery : [],
@@ -40,7 +40,9 @@ function CompanyDetailPage() {
               : data.relatedUserId
                 ? [data.relatedUserId]
                 : [],
-          })
+          }
+          setCompany(normalizedCompany)
+          setFormData(normalizedCompany)
           setUsers(userList)
         }
       } catch (error) {
@@ -202,17 +204,19 @@ function CompanyDetailPage() {
         fetchUsers()
       ])
       if (updated) {
-        setCompany(updated)
-          setFormData({
-            ...updated,
-            media: Array.isArray(updated.media) ? updated.media : [],
-            gallery: Array.isArray(updated.gallery) ? updated.gallery : [],
-            relatedUserIds: Array.isArray(updated.relatedUserIds)
-              ? updated.relatedUserIds
-              : updated.relatedUserId
-                ? [updated.relatedUserId]
-                : [],
-          })
+        // Ensure all fields are properly initialized
+        const normalizedCompany = {
+          ...updated,
+          media: Array.isArray(updated.media) ? updated.media : [],
+          gallery: Array.isArray(updated.gallery) ? updated.gallery : [],
+          relatedUserIds: Array.isArray(updated.relatedUserIds)
+            ? updated.relatedUserIds
+            : updated.relatedUserId
+              ? [updated.relatedUserId]
+              : [],
+        }
+        setCompany(normalizedCompany)
+        setFormData(normalizedCompany)
       }
       if (updatedUsers) {
         setUsers(updatedUsers)
@@ -651,16 +655,18 @@ function CompanyDetailPage() {
                   type="button"
                   onClick={() => {
                     setEditing(false)
-          setFormData({
-            ...company,
-            media: Array.isArray(company.media) ? company.media : [],
-            gallery: Array.isArray(company.gallery) ? company.gallery : [],
-            relatedUserIds: Array.isArray(company.relatedUserIds)
-              ? company.relatedUserIds
-              : company.relatedUserId
-                ? [company.relatedUserId]
-                : [],
-          })
+                    // Reset formData to current company state
+                    const normalizedCompany = {
+                      ...company,
+                      media: Array.isArray(company.media) ? company.media : [],
+                      gallery: Array.isArray(company.gallery) ? company.gallery : [],
+                      relatedUserIds: Array.isArray(company.relatedUserIds)
+                        ? company.relatedUserIds
+                        : company.relatedUserId
+                          ? [company.relatedUserId]
+                          : [],
+                    }
+                    setFormData(normalizedCompany)
                   }}
                   disabled={saving}
                   className="rounded-lg bg-white/10 px-6 py-2 text-sm font-semibold text-slate-200 hover:bg-white/15 disabled:opacity-60"

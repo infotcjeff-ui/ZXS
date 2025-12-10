@@ -136,6 +136,7 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
       setFormData({
         ...company,
         media: Array.isArray(company.media) ? company.media : [],
+        gallery: Array.isArray(company.gallery) ? company.gallery : [],
         relatedUserIds: Array.isArray(company.relatedUserIds) 
           ? company.relatedUserIds 
           : company.relatedUserId 
@@ -199,6 +200,7 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
 
   const mainMedia =
     company.media?.find((m) => m.isMain) || (company.media && company.media[0]) || null
+  const galleryCount = company.gallery?.length || 0
   
   const getRelatedUsers = () => {
     if (Array.isArray(company.relatedUserIds)) {
@@ -229,6 +231,7 @@ function CompanyCard({ company, canEdit, canDelete, isEditing, onEdit, onCancel,
         description: formData.description || '',
         notes: formData.notes || '',
         media: Array.isArray(formData.media) ? formData.media : [],
+        gallery: Array.isArray(formData.gallery) ? formData.gallery : [],
         ownerEmail: formData.ownerEmail || company.ownerEmail,
         ownerName: formData.ownerName || company.ownerName,
         relatedUserIds: Array.isArray(formData.relatedUserIds) ? formData.relatedUserIds : [],
