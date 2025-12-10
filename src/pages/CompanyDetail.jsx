@@ -249,9 +249,16 @@ function CompanyDetailPage() {
     )
   }
 
-  const mainMedia = company.media?.find((m) => m.isMain) || (company.media && company.media[0]) || null
-  const otherMedia = company.media?.filter((m) => !m.isMain) || []
-  const canEdit = session?.role === 'admin' || company.ownerEmail?.toLowerCase() === session?.email?.toLowerCase()
+  // Reset gallery index when company changes
+  useEffect(() => {
+    if (company?.gallery && company.gallery.length > 0) {
+      setSelectedGalleryIndex(0)
+    }
+  }, [company?.id])
+
+  const mainMedia = company?.media?.find((m) => m.isMain) || (company?.media && company.media[0]) || null
+  const otherMedia = company?.media?.filter((m) => !m.isMain) || []
+  const canEdit = session?.role === 'admin' || company?.ownerEmail?.toLowerCase() === session?.email?.toLowerCase()
   const canDelete = session?.role === 'admin'
 
   return (
