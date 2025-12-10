@@ -75,11 +75,22 @@ const loadSession = () => {
 }
 
 export function AuthProvider({ children }) {
-  useEffect(() => {
-    ensureAdminUser()
-  }, [])
+  const [session, setSession] = useState(() => {
+    try {
+      return loadSession()
+    } catch (error) {
+      console.error('Error loading session:', error)
+      return null
+    }
+  })
 
-  const [session, setSession] = useState(() => loadSession())
+  useEffect(() => {
+    try {
+      ensureAdminUser()
+    } catch (error) {
+      console.error('Error initializing auth:', error)
+    }
+  }, [])
 
   useEffect(() => {
     if (!session) return
@@ -397,7 +408,25 @@ export function AuthProvider({ children }) {
     [session, fetchUsers, deleteUser, fetchTodos, saveAllTodos, fetchCompanies, getCompany, createCompany, updateCompany, deleteCompany],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  try {
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  } catch (error) {
+    console.error('AuthProvider rendering error:', error)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-semibold">認證系統錯誤</h1>
+          <p className="mb-6 text-sm text-slate-200/80">請重新整理頁面</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-6 py-3 text-sm font-semibold text-white"
+          >
+            重新載入
+          </button>
+        </div>
+      </div>
+    )
+  }
 }
 
 export const useAuth = () => useContext(AuthContext)

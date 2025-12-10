@@ -1,13 +1,40 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/ZXS/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZXSGit</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0b1224;
+        color: #e2e8f0;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      /* Loading fallback */
+      #root:empty::before {
+        content: '載入中...';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: system-ui, sans-serif;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <noscript>
+      <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0b1224; color: #e2e8f0;">
+        <div style="text-align: center;">
+          <h1>需要啟用 JavaScript</h1>
+          <p>此應用程式需要 JavaScript 才能運行。請啟用瀏覽器的 JavaScript 功能。</p>
+        </div>
+      </div>
+    </noscript>
   </body>
 </html>

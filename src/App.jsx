@@ -189,7 +189,25 @@ function AppShell() {
 }
 
 function App() {
-  return <AppShell />
+  try {
+    return <AppShell />
+  } catch (error) {
+    console.error('App rendering error:', error)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-semibold">載入錯誤</h1>
+          <p className="mb-6 text-sm text-slate-200/80">請重新整理頁面</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-6 py-3 text-sm font-semibold text-white"
+          >
+            重新載入
+          </button>
+        </div>
+      </div>
+    )
+  }
 }
 
 export default App

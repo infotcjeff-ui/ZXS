@@ -2,36 +2,65 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>ZXSGit</title>
+    <title>ZXSGit - Redirecting...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-      // Single Page Apps for GitHub Pages
-      var pathSegmentsToKeep = 1;
-      var l = window.location;
-      var pathname = l.pathname;
-      
-      // Remove double /ZXS if it occurs
-      if (pathname.startsWith('/ZXS/ZXS/')) {
-        pathname = '/ZXS/' + pathname.substring('/ZXS/ZXS/'.length);
-      } else if (pathname.startsWith('/ZXS/ZXS')) {
-        pathname = '/ZXS/' + pathname.substring('/ZXS/ZXS'.length);
-      }
-      
-      // Ensure path starts with /ZXS/
-      if (!pathname.startsWith('/ZXS/')) {
-        if (pathname === '/' || pathname === '') {
-          pathname = '/ZXS/';
-        } else {
-          pathname = '/ZXS' + pathname;
+      (function() {
+        var l = window.location;
+        var pathname = l.pathname;
+        
+        // Remove double /ZXS if it occurs
+        if (pathname.startsWith('/ZXS/ZXS/')) {
+          pathname = '/ZXS/' + pathname.substring('/ZXS/ZXS/'.length);
+        } else if (pathname.startsWith('/ZXS/ZXS')) {
+          pathname = '/ZXS/' + pathname.substring('/ZXS/ZXS'.length);
         }
-      }
-      
-      // Redirect to the correct path
-      var redirectPath = pathname + l.search + l.hash;
-      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + redirectPath);
+        
+        // Ensure path starts with /ZXS/
+        if (!pathname.startsWith('/ZXS/')) {
+          if (pathname === '/' || pathname === '') {
+            pathname = '/ZXS/';
+          } else if (pathname.startsWith('/')) {
+            pathname = '/ZXS' + pathname;
+          } else {
+            pathname = '/ZXS/' + pathname;
+          }
+        }
+        
+        // Build redirect URL
+        var redirectPath = pathname + l.search + l.hash;
+        var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + redirectPath;
+        
+        // Only redirect if we're not already at the correct path
+        if (l.href !== redirectUrl) {
+          l.replace(redirectUrl);
+        } else {
+          // Already at correct path, try to load index.html
+          if (!pathname.endsWith('index.html') && pathname !== '/ZXS/') {
+            l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/ZXS/index.html' + l.search + l.hash);
+          }
+        }
+      })();
     </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0b1224;
+        color: #e2e8f0;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      p {
+        font-size: 1rem;
+      }
+    </style>
   </head>
   <body>
-    <p>Redirecting...</p>
+    <p>正在重新導向...</p>
   </body>
 </html>
 
