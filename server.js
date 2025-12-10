@@ -255,6 +255,7 @@ app.put('/api/companies/:id', (req, res) => {
   target.ownerEmail = payload.ownerEmail ?? target.ownerEmail
   target.ownerName = payload.ownerName ?? target.ownerName
   target.relatedUserId = payload.relatedUserId !== undefined ? payload.relatedUserId : target.relatedUserId
+  target.relatedUserIds = Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : (target.relatedUserIds || [])
   target.updatedAt = Date.now()
 
   saveData(data)
