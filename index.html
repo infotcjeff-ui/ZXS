@@ -52,10 +52,19 @@
       console.log('Hostname:', hostname);
       console.log('Detected base path:', basePath);
       
-      // Only redirect for GitHub Pages
-      if (isGitHubPages && !window.location.pathname.startsWith('/ZXS/')) {
-        console.warn('Path mismatch! Redirecting...');
-        window.location.replace('/ZXS/');
+      // Only redirect for GitHub Pages if path doesn't start with /ZXS/
+      // But avoid redirect loop - only redirect if we're at root or wrong path
+      if (isGitHubPages) {
+        const pathname = window.location.pathname;
+        if (pathname === '/' || pathname === '') {
+          // At root, redirect to /ZXS/
+          console.log('Redirecting from root to /ZXS/');
+          window.location.replace('/ZXS/');
+        } else if (!pathname.startsWith('/ZXS/') && !pathname.startsWith('/ZXS')) {
+          // Wrong path, redirect to /ZXS/ with the path
+          console.log('Redirecting to /ZXS' + pathname);
+          window.location.replace('/ZXS' + pathname);
+        }
       }
       
       // Remove loading message once React starts rendering

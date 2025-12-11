@@ -42,12 +42,15 @@ window.addEventListener('unhandledrejection', (event) => {
 // Detect deployment environment and set base path
 const getBasePath = () => {
   const hostname = window.location.hostname
-  // ServerAvatar or custom domain deployment (root path)
-  if (hostname.includes('tempavatar.xyz') || hostname.includes('serveravatar') || hostname !== 'infotcjeff-ui.github.io') {
-    return '/'
-  }
+  const pathname = window.location.pathname
+  
   // GitHub Pages deployment (subpath)
-  return '/ZXS'
+  if (hostname === 'infotcjeff-ui.github.io' || pathname.startsWith('/ZXS')) {
+    return '/ZXS'
+  }
+  
+  // ServerAvatar or custom domain deployment (root path)
+  return '/'
 }
 
 const basePath = getBasePath()
