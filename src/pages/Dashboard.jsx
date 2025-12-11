@@ -201,7 +201,7 @@ function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {myCompanies.map((company) => {
-                const mainMedia = company?.media?.find((m) => m.isMain) || (company?.media && company.media[0]) || null
+                const mainImage = company?.gallery && company.gallery.length > 0 ? company.gallery[0] : null
                 const relatedUsers = getRelatedUsers(company)
                 
                 return (
@@ -210,10 +210,10 @@ function Dashboard() {
                     to={`/companies/${company.id}`}
                     className="group rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30 backdrop-blur transition hover:border-white/20 hover:bg-white/10"
                   >
-                    {mainMedia ? (
+                    {mainImage ? (
                       <div className="mb-3 aspect-video overflow-hidden rounded-lg">
                         <img
-                          src={mainMedia.dataUrl}
+                          src={mainImage.dataUrl}
                           alt={company.name}
                           className="h-full w-full object-cover transition group-hover:scale-105"
                         />

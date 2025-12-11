@@ -173,7 +173,7 @@ function CompaniesPage() {
 }
 
 function CompanyCard({ company, users, canEdit, canDelete, onDelete, deleting, getRelatedUsers, isList = false }) {
-  const mainMedia = company.media?.find((m) => m.isMain) || (company.media && company.media[0]) || null
+  const mainImage = company?.gallery && company.gallery.length > 0 ? company.gallery[0] : null
   const galleryCount = company.gallery?.length || 0
   const relatedUsers = getRelatedUsers(company)
 
@@ -183,8 +183,8 @@ function CompanyCard({ company, users, canEdit, canDelete, onDelete, deleting, g
         <div className="flex items-start gap-4">
           <Link to={`/companies/${company.id}`} className="flex flex-1 items-center gap-4 hover:opacity-80">
             <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-white/10">
-              {mainMedia?.dataUrl ? (
-                <img src={mainMedia.dataUrl} alt={company.name} className="h-full w-full object-cover" />
+              {mainImage?.dataUrl ? (
+                <img src={mainImage.dataUrl} alt={company.name} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-xs text-slate-300">
                   無圖片
@@ -249,8 +249,8 @@ function CompanyCard({ company, users, canEdit, canDelete, onDelete, deleting, g
       className="group rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-xl shadow-black/30 backdrop-blur transition hover:border-sky-400/50 hover:bg-white/10"
     >
       <div className="relative mb-4 aspect-video overflow-hidden rounded-xl bg-white/10">
-        {mainMedia?.dataUrl ? (
-          <img src={mainMedia.dataUrl} alt={company.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+        {mainImage?.dataUrl ? (
+          <img src={mainImage.dataUrl} alt={company.name} className="h-full w-full object-cover transition group-hover:scale-105" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-slate-300">
             無圖片

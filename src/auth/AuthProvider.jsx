@@ -419,7 +419,6 @@ export function AuthProvider({ children }) {
     try {
       console.log('createCompany: Starting with payload:', {
         name: payload.name,
-        mediaCount: payload.media?.length || 0,
         galleryCount: payload.gallery?.length || 0,
         relatedUserIdsCount: payload.relatedUserIds?.length || 0
       })
@@ -433,7 +432,6 @@ export function AuthProvider({ children }) {
         phone: payload.phone || '',
         website: payload.website || '',
         notes: payload.notes || '',
-        media: Array.isArray(payload.media) ? payload.media : [],
         gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
         relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
         ownerEmail: payload.ownerEmail || 'unknown@zxsgit.local',
@@ -442,10 +440,14 @@ export function AuthProvider({ children }) {
         updatedAt: Date.now(),
       }
       
+      // Ensure no media field exists
+      if (newCompany.media) {
+        delete newCompany.media
+      }
+      
       console.log('createCompany: New company object:', {
         id: newCompany.id,
         name: newCompany.name,
-        mediaCount: newCompany.media.length,
         galleryCount: newCompany.gallery.length
       })
       
@@ -486,10 +488,9 @@ export function AuthProvider({ children }) {
         return { ok: false, message: '公司不存在' }
       }
       
-      console.log('updateCompany: Received payload media:', payload.media?.length || 0)
       console.log('updateCompany: Received payload gallery:', payload.gallery?.length || 0)
       
-      // Always update media and gallery from payload - ensure they are arrays
+      // Always update gallery from payload - ensure it is an array
       const updatedCompany = {
         ...companies[index],
         name: payload.name !== undefined ? payload.name : companies[index].name,
@@ -501,16 +502,18 @@ export function AuthProvider({ children }) {
         ownerEmail: payload.ownerEmail || companies[index].ownerEmail,
         ownerName: payload.ownerName || companies[index].ownerName,
         id: companies[index].id, // Preserve ID
-        media: Array.isArray(payload.media) ? payload.media : [],
         gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
         relatedUserIds: Array.isArray(payload.relatedUserIds) ? payload.relatedUserIds : [],
         createdAt: companies[index].createdAt || Date.now(),
         updatedAt: Date.now(),
       }
       
-      console.log('updateCompany: Updated company media count:', updatedCompany.media?.length || 0)
+      // Remove media field if it exists (for backward compatibility)
+      if (updatedCompany.media) {
+        delete updatedCompany.media
+      }
+      
       console.log('updateCompany: Updated company gallery count:', updatedCompany.gallery?.length || 0)
-      console.log('updateCompany: Media data sample:', updatedCompany.media?.[0] ? { id: updatedCompany.media[0].id, hasDataUrl: !!updatedCompany.media[0].dataUrl, name: updatedCompany.media[0].name } : 'none')
       console.log('updateCompany: Gallery data sample:', updatedCompany.gallery?.[0] ? { id: updatedCompany.gallery[0].id, hasDataUrl: !!updatedCompany.gallery[0].dataUrl, name: updatedCompany.gallery[0].name } : 'none')
       
       companies[index] = updatedCompany
@@ -520,7 +523,6 @@ export function AuthProvider({ children }) {
       const savedCompanies = loadCompanies()
       const savedCompany = savedCompanies.find(c => c.id === id)
       if (savedCompany) {
-        console.log('updateCompany: Verified saved company media count:', savedCompany.media?.length || 0)
         console.log('updateCompany: Verified saved company gallery count:', savedCompany.gallery?.length || 0)
       }
       

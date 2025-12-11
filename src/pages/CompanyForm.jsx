@@ -11,7 +11,6 @@ const blankCompany = {
   phone: '',
   website: '',
   notes: '',
-  media: [],
   gallery: [],
   relatedUserIds: [],
 }
@@ -25,7 +24,6 @@ function CompanyFormPage() {
   const [alert, setAlert] = useState(null)
   const [loading, setLoading] = useState(Boolean(id))
   const [saving, setSaving] = useState(false)
-  const dropRef = useRef(null)
   const galleryDropRef = useRef(null)
 
   useEffect(() => {
@@ -46,7 +44,6 @@ function CompanyFormPage() {
         setCompany({
           ...blankCompany,
           ...data,
-          media: Array.isArray(data.media) ? data.media : [],
           gallery: Array.isArray(data.gallery) ? data.gallery : [],
           relatedUserIds: Array.isArray(data.relatedUserIds)
             ? data.relatedUserIds
@@ -84,7 +81,6 @@ function CompanyFormPage() {
       phone: company.phone || '',
       website: company.website || '',
       notes: company.notes || '',
-      media: Array.isArray(company.media) ? company.media : [],
       gallery: Array.isArray(company.gallery) ? company.gallery : [],
       ownerEmail: firstSelectedUser?.email || company.ownerEmail || session?.email || 'unknown@zxsgit.local',
       ownerName: firstSelectedUser?.name || company.ownerName || session?.name || 'Unknown',
@@ -93,9 +89,7 @@ function CompanyFormPage() {
 
     try {
       console.log('Submitting company update with:')
-      console.log('- Media items:', payload.media?.length || 0)
       console.log('- Gallery items:', payload.gallery?.length || 0)
-      console.log('- Media data:', payload.media)
       console.log('- Gallery data:', payload.gallery)
       
       const result = company.id
@@ -104,7 +98,6 @@ function CompanyFormPage() {
 
       console.log('Company save result:', result)
       console.log('Saved company:', result.company)
-      console.log('Saved company media:', result.company?.media)
       console.log('Saved company gallery:', result.company?.gallery)
 
       if (!result.ok) {
@@ -120,7 +113,6 @@ function CompanyFormPage() {
       const savedCompanies = JSON.parse(localStorage.getItem('zxs-companies') || '[]')
       const savedCompany = savedCompanies.find(c => c.id === (company.id || result.company?.id))
       if (savedCompany) {
-        console.log('Verified saved company media count:', savedCompany.media?.length || 0)
         console.log('Verified saved company gallery count:', savedCompany.gallery?.length || 0)
       } else {
         console.error('Company not found in localStorage after save!')
@@ -194,42 +186,6 @@ function CompanyFormPage() {
     })
   }
 
-  const onDropFiles = (files) => {
-    const list = Array.from(files)
-    if (!list.length) return
-    
-    // Filter only image files
-    const imageFiles = list.filter(file => file.type.startsWith('image/'))
-    if (imageFiles.length === 0) {
-      setAlert({ kind: 'error', message: '請選擇圖片檔案' })
-      return
-    }
-
-    // Check file size (warn if > 5MB before compression)
-    const largeFiles = imageFiles.filter(f => f.size > 5 * 1024 * 1024)
-    if (largeFiles.length > 0) {
-      setAlert({ kind: 'error', message: '圖片檔案過大，請選擇較小的圖片（建議 < 5MB）' })
-      return
-    }
-
-    const readers = imageFiles.map(file => compressImage(file))
-    Promise.all(readers)
-      .then((media) => {
-        setCompany((c) => {
-          const existing = c.media || []
-          const next =
-            existing.length === 0 && media.length
-              ? media.map((m, idx) => ({ ...m, isMain: idx === 0 }))
-              : media
-          return { ...c, media: [...existing, ...next] }
-        })
-        setAlert({ kind: 'success', message: `已上傳 ${media.length} 張圖片（已壓縮）` })
-      })
-      .catch((error) => {
-        console.error('Error compressing images:', error)
-        setAlert({ kind: 'error', message: '圖片處理失敗: ' + error.message })
-      })
-  }
 
   const onDropGalleryFiles = (files) => {
     const list = Array.from(files)
@@ -278,43 +234,27 @@ function CompanyFormPage() {
   }
 
   useEffect(() => {
-    const el = dropRef.current
     const galleryEl = galleryDropRef.current
-    if (!el && !galleryEl) return
+    if (!galleryEl) return
     const prevent = (e) => {
       e.preventDefault()
       e.stopPropagation()
     }
-    const handleDrop = (e) => {
-      prevent(e)
-      onDropFiles(e.dataTransfer.files)
-    }
     const handleGalleryDrop = (e) => {
       prevent(e)
       onDropGalleryFiles(e.dataTransfer.files)
-    }
-    if (el) {
-      el.addEventListener('dragover', prevent)
-      el.addEventListener('drop', handleDrop)
     }
     if (galleryEl) {
       galleryEl.addEventListener('dragover', prevent)
       galleryEl.addEventListener('drop', handleGalleryDrop)
     }
     return () => {
-      if (el) {
-        el.removeEventListener('dragover', prevent)
-        el.removeEventListener('drop', handleDrop)
-      }
       if (galleryEl) {
         galleryEl.removeEventListener('dragover', prevent)
         galleryEl.removeEventListener('drop', handleGalleryDrop)
       }
     }
   }, [])
-
-  const removeMedia = (mid) =>
-    setCompany((c) => ({ ...c, media: (c.media || []).filter((m) => m.id !== mid) }))
 
   const removeGalleryImage = (gid) =>
     setCompany((c) => ({ ...c, gallery: (c.gallery || []).filter((g) => g.id !== gid) }))
@@ -347,70 +287,10 @@ function CompanyFormPage() {
         <div className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">圖片管理</h2>
-            <div
-              ref={dropRef}
-              className="mb-3 rounded-lg border border-dashed border-sky-400/50 bg-sky-400/5 px-3 py-4 text-center text-xs text-sky-100"
-            >
-              拖放圖片到此或點擊上傳
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => onDropFiles(e.target.files)}
-                className="mt-2 hidden"
-                id="file-input-form"
-              />
-              <label
-                htmlFor="file-input-form"
-                className="mt-2 inline-block cursor-pointer rounded bg-sky-500/20 px-3 py-1 text-xs text-sky-200 hover:bg-sky-500/30"
-              >
-                選擇圖片
-              </label>
-            </div>
-            {company.media?.length > 0 ? (
-              <div className="mb-3 grid grid-cols-2 gap-2">
-                {company.media.map((m) => (
-                  <div key={m.id} className="relative overflow-hidden rounded-lg border border-white/10 bg-white/5">
-                    <img src={m.dataUrl} alt={m.name} className="h-20 w-full object-cover" />
-                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-slate-950/80 px-2 py-1 text-[10px] text-white">
-                      <span className="truncate flex-1">
-                        {m.isMain && <span className="text-emerald-300">主圖 • </span>}
-                        {m.name}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {!m.isMain && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setCompany((c) => ({
-                                ...c,
-                                media: c.media.map((x) => ({ ...x, isMain: x.id === m.id })),
-                              }))
-                            }
-                            className="text-emerald-200 hover:text-emerald-100 text-[10px]"
-                          >
-                            設為主
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeMedia(m.id)}
-                          className="text-rose-200 hover:text-rose-100 text-[10px]"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400 text-center py-4">暫無圖片</p>
-            )}
-
+            
             {/* Gallery Section */}
-            <div className="mt-6">
-              <h3 className="mb-3 text-sm font-semibold text-white">圖庫（最多 5 張）</h3>
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-white">圖庫（最多 5 張，第一張將作為主圖片）</h3>
               <div
                 ref={galleryDropRef}
                 className="mb-3 rounded-lg border border-dashed border-purple-400/50 bg-purple-400/5 px-3 py-4 text-center text-xs text-purple-100"

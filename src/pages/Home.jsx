@@ -41,11 +41,10 @@ function HomePage() {
           >
             <div className="mb-4 aspect-video overflow-hidden rounded-xl bg-white/10">
               {(() => {
-                const mainMedia =
-                  company.media?.find((m) => m.isMain) || (company.media && company.media[0]) || null
-                return mainMedia?.dataUrl ? (
+                const mainImage = company?.gallery && company.gallery.length > 0 ? company.gallery[0] : null
+                return mainImage?.dataUrl ? (
                   <img
-                    src={mainMedia.dataUrl}
+                    src={mainImage.dataUrl}
                     alt={company.name}
                     className="h-full w-full object-cover transition group-hover:scale-105"
                   />
