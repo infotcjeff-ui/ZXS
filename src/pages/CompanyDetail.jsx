@@ -209,7 +209,7 @@ function CompanyDetailPage() {
               <h3 className="mb-3 text-sm font-semibold text-white">圖庫</h3>
               {/* Main Gallery Image */}
               <div className="mb-3 rounded-xl border border-white/10 bg-white/5 p-2">
-                <div className="aspect-video overflow-hidden rounded-lg">
+                <div className="aspect-square overflow-hidden rounded-lg flex items-center justify-center">
                   <img
                     src={company.gallery[selectedGalleryIndex]?.dataUrl}
                     alt={`Gallery ${selectedGalleryIndex + 1}`}
@@ -247,11 +247,11 @@ function CompanyDetailPage() {
                                 : 'border-white/10 bg-white/5 hover:border-white/20'
                             }`}
                           >
-                            <div className="aspect-square overflow-hidden">
+                            <div className="aspect-square overflow-hidden flex items-center justify-center">
                               <img
                                 src={g.dataUrl}
                                 alt={`Thumbnail ${galleryIndex + 1}`}
-                                className="h-full w-full object-cover"
+                                className="h-full w-full object-contain"
                               />
                             </div>
                           </button>

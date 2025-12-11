@@ -384,6 +384,25 @@ export function AuthProvider({ children }) {
     return { ok: true, message: 'Profile updated' }
   }
 
+  const syncUsersToFile = useCallback(async () => {
+    try {
+      const localUsers = loadUsers()
+      const res = await fetch(`${API_BASE}/api/users/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users: localUsers }),
+      })
+      const data = await res.json()
+      if (res.ok && data.ok) {
+        return { ok: true, message: `已同步 ${data.count} 個用戶到 users.json` }
+      }
+      return { ok: false, message: data.message || '同步失敗' }
+    } catch (err) {
+      console.error('Unable to sync users to file', err)
+      return { ok: false, message: '無法連接到伺服器，請確保伺服器正在運行' }
+    }
+  }, [])
+
   const fetchTodos = useCallback(() => loadTodos(), [])
   const saveAllTodos = useCallback((todos) => saveTodos(todos), [])
 
@@ -543,6 +562,7 @@ export function AuthProvider({ children }) {
       updateUserAsAdmin,
       deleteUser,
       updateSelf,
+      syncUsersToFile,
       fetchTodos,
       saveAllTodos,
       fetchCompanies,
@@ -552,7 +572,7 @@ export function AuthProvider({ children }) {
       deleteCompany,
       passwordRules,
     }),
-    [session, fetchUsers, deleteUser, fetchTodos, saveAllTodos, fetchCompanies, getCompany, createCompany, updateCompany, deleteCompany],
+    [session, fetchUsers, deleteUser, syncUsersToFile, fetchTodos, saveAllTodos, fetchCompanies, getCompany, createCompany, updateCompany, deleteCompany],
   )
 
   try {

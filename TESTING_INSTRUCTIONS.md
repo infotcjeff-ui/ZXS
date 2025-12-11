@@ -124,3 +124,4 @@ createTestCompany()
 - [ ] 沒有 localStorage 配額錯誤
 - [ ] 圖片已正確壓縮（檢查數據大小）
 
+

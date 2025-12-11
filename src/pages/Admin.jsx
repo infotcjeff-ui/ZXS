@@ -3,13 +3,14 @@ import { useAuth } from '../auth/AuthProvider.jsx'
 import AlertBanner from '../components/AlertBanner.jsx'
 
 function AdminPage() {
-  const { fetchUsers, updateUserAsAdmin, deleteUser } = useAuth()
+  const { fetchUsers, updateUserAsAdmin, deleteUser, syncUsersToFile } = useAuth()
   const [users, setUsers] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [banner, setBanner] = useState(null)
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -75,7 +76,27 @@ function AdminPage() {
                 <AlertBanner kind={error ? 'error' : 'success'} message={error || banner} />
               )}
             </div>
-            <CopyCSSButton />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  setSyncing(true)
+                  setError(null)
+                  const res = await syncUsersToFile()
+                  if (res.ok) {
+                    setBanner(res.message)
+                  } else {
+                    setError(res.message)
+                  }
+                  setSyncing(false)
+                }}
+                disabled={syncing}
+                className="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-xs font-semibold text-white shadow disabled:opacity-60"
+              >
+                {syncing ? '同步中...' : '同步到 users.json'}
+              </button>
+              <CopyCSSButton />
+            </div>
           </div>
           {loading ? (
             <p className="text-sm text-slate-200/80">載入用戶中…</p>

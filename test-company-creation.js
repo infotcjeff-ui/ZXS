@@ -83,3 +83,4 @@ function createTestCompany() {
 
 console.log('Test company creation script loaded!');
 console.log('Run: createTestCompany() to create a test company with all fields and dummy images');
+

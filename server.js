@@ -73,6 +73,7 @@ app.get('/', (req, res) => {
       'GET /api/users',
       'PUT /api/users/:id',
       'DELETE /api/users/:id',
+      'POST /api/users/sync',
       'GET /api/todos',
       'POST /api/todos',
       'GET /api/companies',
@@ -165,6 +166,59 @@ app.put('/api/users/:id', (req, res) => {
 
   saveUsers(users)
   return res.json({ ok: true, message: 'User updated' })
+})
+
+// Sync users from localStorage to file
+app.post('/api/users/sync', (req, res) => {
+  const { users } = req.body ?? {}
+  if (!Array.isArray(users)) {
+    return res.status(400).json({ ok: false, message: 'Invalid users format' })
+  }
+  
+  // Merge with existing users, prioritizing new data
+  const existingUsers = loadUsers()
+  const userMap = new Map()
+  const emailMap = new Map()
+  
+  // Add existing users first
+  existingUsers.forEach(user => {
+    const email = user.email?.toLowerCase()
+    if (email && !emailMap.has(email)) {
+      userMap.set(user.id, user)
+      emailMap.set(email, user.id)
+    }
+  })
+  
+  // Add/update with new users
+  users.forEach(user => {
+    const email = user.email?.toLowerCase()
+    if (!email) return
+    
+    // If user has password, hash it; if passwordHash exists, keep it
+    const processedUser = {
+      ...user,
+      email: email,
+      passwordHash: user.passwordHash || (user.password ? hashPassword(user.password) : null),
+    }
+    // Remove plain password
+    delete processedUser.password
+    
+    // Update or add user
+    if (emailMap.has(email)) {
+      const existingId = emailMap.get(email)
+      userMap.set(existingId, { ...userMap.get(existingId), ...processedUser })
+    } else if (user.id && userMap.has(user.id)) {
+      userMap.set(user.id, { ...userMap.get(user.id), ...processedUser })
+    } else {
+      const userId = user.id || randomUUID()
+      userMap.set(userId, { ...processedUser, id: userId })
+      emailMap.set(email, userId)
+    }
+  })
+  
+  const mergedUsers = Array.from(userMap.values())
+  saveUsers(mergedUsers)
+  return res.json({ ok: true, message: 'Users synced', count: mergedUsers.length })
 })
 
 app.delete('/api/users/:id', (req, res) => {
