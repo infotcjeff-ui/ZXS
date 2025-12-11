@@ -41,11 +41,31 @@ npm install
 # 構建 ServerAvatar 版本
 npm run build:serveravatar
 
-# 如果需要，可以添加其他命令
-# 例如：npm run test（如果有測試）
+# 驗證構建輸出
+if [ ! -f "dist/index.html" ]; then
+    echo "ERROR: dist/index.html not found!"
+    exit 1
+fi
+
+if [ ! -d "dist/assets" ]; then
+    echo "ERROR: dist/assets directory not found!"
+    exit 1
+fi
+
+# 確保 .htaccess 被複製
+if [ -f ".htaccess" ] && [ ! -f "dist/.htaccess" ]; then
+    cp .htaccess dist/.htaccess
+    echo "Copied .htaccess to dist"
+fi
+
+echo "Build completed successfully!"
+ls -la dist/
 ```
 
-**重要：** 必須使用 `npm run build:serveravatar` 而不是 `npm run build`，因為這會使用正確的 base path (`/`) 而不是 GitHub Pages 的 base path (`/ZXS/`)
+**重要：** 
+- 必須使用 `npm run build:serveravatar` 而不是 `npm run build`
+- 確保輸出目錄設置為 `dist`，不是 `src` 或其他目錄
+- 構建後的 `dist/index.html` 應該引用 `/assets/index-xxxxx.js`，而不是 `/src/main.jsx`
 
 ## 完整設置示例
 
