@@ -89,7 +89,6 @@ const saveCompanies = (companies) => {
       console.log('Last company:', {
         id: lastCompany?.id,
         name: lastCompany?.name,
-        mediaCount: lastCompany?.media?.length || 0,
         galleryCount: lastCompany?.gallery?.length || 0
       })
     }

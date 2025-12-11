@@ -286,11 +286,11 @@ function CompanyFormPage() {
         {/* Left Column: Images */}
         <div className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">圖片管理</h2>
+            <h2 className="mb-4 text-lg font-semibold text-white">圖庫</h2>
+            <p className="mb-3 text-xs text-slate-400">最多 5 張，第一張將作為主圖片</p>
             
             {/* Gallery Section */}
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-white">圖庫（最多 5 張，第一張將作為主圖片）</h3>
               <div
                 ref={galleryDropRef}
                 className="mb-3 rounded-lg border border-dashed border-purple-400/50 bg-purple-400/5 px-3 py-4 text-center text-xs text-purple-100"

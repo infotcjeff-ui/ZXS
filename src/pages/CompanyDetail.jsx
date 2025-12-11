@@ -12,6 +12,7 @@ function CompanyDetailPage() {
   const [loading, setLoading] = useState(true)
   const [alert, setAlert] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -23,7 +24,6 @@ function CompanyDetailPage() {
         if (active && data) {
           const normalizedCompany = {
             ...data,
-            media: Array.isArray(data.media) ? data.media : [],
             gallery: Array.isArray(data.gallery) ? data.gallery : [],
             relatedUserIds: Array.isArray(data.relatedUserIds)
               ? data.relatedUserIds
@@ -31,10 +31,12 @@ function CompanyDetailPage() {
                 ? [data.relatedUserId]
                 : [],
           }
+          // Remove media field if it exists (for backward compatibility)
+          if (normalizedCompany.media) {
+            delete normalizedCompany.media
+          }
           console.log('CompanyDetail: Loaded company data:', normalizedCompany)
-          console.log('CompanyDetail: Media count:', normalizedCompany.media?.length || 0)
           console.log('CompanyDetail: Gallery count:', normalizedCompany.gallery?.length || 0)
-          console.log('CompanyDetail: Media sample:', normalizedCompany.media?.[0] ? { id: normalizedCompany.media[0].id, hasDataUrl: !!normalizedCompany.media[0].dataUrl } : 'none')
           console.log('CompanyDetail: Gallery sample:', normalizedCompany.gallery?.[0] ? { id: normalizedCompany.gallery[0].id, hasDataUrl: !!normalizedCompany.gallery[0].dataUrl } : 'none')
           
           // Force re-render by creating a new object reference
@@ -79,6 +81,11 @@ function CompanyDetailPage() {
     }
   }, [id, getCompany, fetchUsers])
 
+  useEffect(() => {
+    if (company?.gallery && company.gallery.length > 0) {
+      setSelectedGalleryIndex(0)
+    }
+  }, [company?.id])
 
   const handleDelete = async () => {
     if (!confirm(`確定要刪除公司 "${company.name}"？此操作無法復原。`)) return
@@ -174,8 +181,88 @@ function CompanyDetailPage() {
 
       {alert && <AlertBanner kind={alert.kind} message={alert.message} />}
 
-      <div className="grid grid-cols-1 gap-6">
-        {/* Company Information */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Left Column: Images */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="mb-4 text-lg font-semibold text-white">圖庫</h2>
+          
+          {/* Gallery Display */}
+          {company.gallery && company.gallery.length > 0 ? (
+            <div className="mb-4">
+              {/* Main Gallery Image */}
+              <div className="mb-3 rounded-xl border border-white/10 bg-white/5 p-2">
+                <div className="aspect-square overflow-hidden rounded-lg flex items-center justify-center">
+                  <img
+                    src={company.gallery[selectedGalleryIndex]?.dataUrl}
+                    alt={`Gallery ${selectedGalleryIndex + 1}`}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              </div>
+              
+              {/* Gallery Thumbnail Grid */}
+              {company.gallery.length > 1 && (
+                <div className="relative">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGalleryIndex((prev) => (prev === 0 ? company.gallery.length - 1 : prev - 1))}
+                      className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+                    >
+                      ←
+                    </button>
+                    
+                    <div className="flex-1 grid grid-cols-4 gap-2">
+                      {Array.from({ length: Math.min(4, company.gallery.length) }).map((_, idx) => {
+                        const galleryIndex = (selectedGalleryIndex - 1 + idx + company.gallery.length) % company.gallery.length
+                        const g = company.gallery[galleryIndex]
+                        const isSelected = galleryIndex === selectedGalleryIndex
+                        
+                        return (
+                          <button
+                            key={`${g.id}-${idx}`}
+                            type="button"
+                            onClick={() => setSelectedGalleryIndex(galleryIndex)}
+                            className={`rounded-lg border-2 overflow-hidden transition ${
+                              isSelected
+                                ? 'border-sky-400 bg-sky-400/20'
+                                : 'border-white/10 bg-white/5 hover:border-white/20'
+                            }`}
+                          >
+                            <div className="aspect-square overflow-hidden flex items-center justify-center">
+                              <img
+                                src={g.dataUrl}
+                                alt={`Thumbnail ${galleryIndex + 1}`}
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGalleryIndex((prev) => (prev === company.gallery.length - 1 ? 0 : prev + 1))}
+                      className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+                    >
+                      →
+                    </button>
+                  </div>
+                  <p className="mt-2 text-center text-xs text-slate-400">
+                    {selectedGalleryIndex + 1} / {company.gallery.length}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="aspect-square flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400">
+              暫無圖片
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Company Information */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">公司資訊</h2>
           <div className="space-y-4 text-sm">
